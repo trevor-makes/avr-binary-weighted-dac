@@ -18,11 +18,11 @@
 #endif
 
 // Option to invert axis in case oscilloscope does not support this
-constexpr bool FLIP_X = true;
-constexpr bool FLIP_Y = true;
+constexpr bool INVERT_X = true;
+constexpr bool INVERT_Y = true;
 
 inline void write_x(uint8_t x) {
-  if (FLIP_X) {
+  if (INVERT_X) {
     PortB::write(63 - x);
   } else {
     PortB::write(x);
@@ -30,7 +30,7 @@ inline void write_x(uint8_t x) {
 }
 
 inline void write_y(uint8_t y) {
-  if (FLIP_Y) {
+  if (INVERT_Y) {
     PortC::write(63 - y);
   } else {
     PortC::write(y);
@@ -43,9 +43,9 @@ void print(uint8_t x, uint8_t y, const char* str) {
   for (uint8_t row = 0; row < 8; ++row) {
     // Repeat each row twice (double pixels vertically)
     for (uint8_t dup = 0; dup < 2; ++dup) {
-      for (uint8_t col = 0; col < 8; ++col) {
+      for (uint8_t col_byte = 0; col_byte < 8; ++col_byte) {
         // Read ASCII code for current character
-        char c = str[col];
+        char c = str[col_byte];
 
         // End row early if we find end of string (null terminator)
         if (c == '\0')
@@ -56,19 +56,19 @@ void print(uint8_t x, uint8_t y, const char* str) {
           continue;
 
         // Look-up scanline for character at current row
-        uint8_t scan = pgm_read_byte(&CHAR_ROM[(c - 0x20) * 8 + row]);
+        uint8_t scan_byte = pgm_read_byte(&CHAR_ROM[(c - 0x20) * 8 + row]);
 
         // Skip blank scanlines
-        if (scan == 0)
+        if (scan_byte == 0)
           continue;
 
         // Write Y only if we find a non-blank scanline
         write_y((y + row) * 2 + dup);
 
         // Write X for each set pixel
-        for (uint8_t i = 0; i < 8; ++i, scan <<= 1) {
-          if (scan >= 0x80) {
-            write_x(x + col * 8 + i);
+        for (uint8_t col_bit = 0; col_bit < 8; ++col_bit, scan_byte <<= 1) {
+          if (scan_byte >= 0x80) {
+            write_x(x + col_byte * 8 + col_bit);
           }
         }
       }
@@ -95,6 +95,7 @@ void clear_screen(uCLI::Args) {
   SCREEN_RAM[1][0] = '\0';
   SCREEN_RAM[2][0] = '\0';
   SCREEN_RAM[3][0] = '\0';
+  idle_fn = print_screen;
 }
 
 // Copy logo to screen buffer
@@ -113,6 +114,7 @@ void write_msg(uCLI::Args args) {
   strncpy(SCREEN_RAM[1], SCREEN_RAM[2], 8);
   strncpy(SCREEN_RAM[2], SCREEN_RAM[3], 8);
   strncpy(SCREEN_RAM[3], message, 8);
+  idle_fn = print_screen;
 }
 
 // Lookup table for cached sine values
@@ -145,20 +147,21 @@ const uint8_t* bitmap_ptr;
 
 void draw_bitmap() {
   for (uint8_t row = 0; row < 64; ++row) {
-    for (uint8_t col = 0; col < 8; ++col) {
-      uint8_t scan = pgm_read_byte(&bitmap_ptr[row * 8 + col]);
+    for (uint8_t col_byte = 0; col_byte < 8; ++col_byte) {
+      // Read next byte of current scanline
+      uint8_t scan_byte = pgm_read_byte(&bitmap_ptr[row * 8 + col_byte]);
 
       // Skip blank scanlines
-      if (scan == 0)
+      if (scan_byte == 0)
         continue;
 
       // Write Y only if we find a non-blank scanline
       write_y(row);
 
       // Write X for each set pixel
-      for (uint8_t i = 0; i < 8; ++i, scan <<= 1) {
-        if (scan >= 0x80) {
-          write_x(col * 8 + i);
+      for (uint8_t col_bit = 0; col_bit < 8; ++col_bit, scan_byte <<= 1) {
+        if (scan_byte >= 0x80) {
+          write_x(col_byte * 8 + col_bit);
         }
       }
     }
