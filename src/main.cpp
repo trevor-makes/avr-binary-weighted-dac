@@ -37,11 +37,28 @@ inline void write_y(uint8_t y) {
   }
 }
 
+constexpr uint8_t BITS_PER_BYTE = 8;
+
+inline void write_bits(uint8_t x, uint8_t y, uint8_t bits) {
+  // Skip blank scanlines
+  if (bits == 0)
+    return;
+
+  // Write Y only if we find a non-blank scanline
+  write_y(y);
+
+  // Write X for each set bit
+  for (uint8_t i = 0; i < BITS_PER_BYTE; ++i, bits <<= 1) {
+    if (bits >= 0x80) { // if high bit is set...
+      write_x(x + i);
+    }
+  }
+}
+
 constexpr uint8_t SCREEN_COLS = 8;
 constexpr uint8_t SCREEN_ROWS = 4;
 constexpr uint8_t ROWS_PER_CHAR = 8;
 constexpr uint8_t PIX_PER_ROW = 2;
-constexpr uint8_t BITS_PER_BYTE = 8;
 constexpr char FIRST_CHAR = ' ';
 constexpr char LAST_CHAR = 'z';
 
@@ -67,19 +84,10 @@ void print(uint8_t x, uint8_t y, const char* str) {
         uint16_t scan_index = (c - FIRST_CHAR) * ROWS_PER_CHAR + row;
         uint8_t scan_data = pgm_read_byte(&CHAR_ROM[scan_index]);
 
-        // Skip blank scanlines
-        if (scan_data == 0)
-          continue;
-
-        // Write Y only if we find a non-blank scanline
-        write_y((y + row) * PIX_PER_ROW + row_pix);
-
-        // Write X for each set pixel
-        for (uint8_t col_bit = 0; col_bit < BITS_PER_BYTE; ++col_bit, scan_data <<= 1) {
-          if (scan_data >= 0x80) { // if high bit (current pixel) is set...
-            write_x(x + col_byte * BITS_PER_BYTE + col_bit);
-          }
-        }
+        // Write X, Y for set bits
+        uint8_t scan_x = x + col_byte * BITS_PER_BYTE;
+        uint8_t scan_y = (y + row) * PIX_PER_ROW + row_pix;
+        write_bits(scan_x, scan_y, scan_data);
       }
     }
   }
@@ -162,22 +170,13 @@ const uint8_t* bitmap_ptr;
 void draw_bitmap() {
   for (uint8_t row = 0; row < BITMAP_ROWS; ++row) {
     for (uint8_t col_byte = 0; col_byte < BITMAP_COLS; ++col_byte) {
-      // Read next byte of current scanline
-      uint8_t scan_data = pgm_read_byte(&bitmap_ptr[row * BITMAP_COLS + col_byte]);
+      // Read byte at current bitmap index
+      uint16_t bitmap_index = row * BITMAP_COLS + col_byte;
+      uint8_t scan_data = pgm_read_byte(&bitmap_ptr[bitmap_index]);
 
-      // Skip blank scanlines
-      if (scan_data == 0)
-        continue;
-
-      // Write Y only if we find a non-blank scanline
-      write_y(row);
-
-      // Write X for each set pixel
-      for (uint8_t col_bit = 0; col_bit < BITS_PER_BYTE; ++col_bit, scan_data <<= 1) {
-        if (scan_data >= 0x80) { // if high bit (current pixel) is set...
-          write_x(col_byte * BITS_PER_BYTE + col_bit);
-        }
-      }
+      // Write X, Y for set bits
+      uint8_t col = col_byte * BITS_PER_BYTE;
+      write_bits(col, row, scan_data);
     }
   }
 }
