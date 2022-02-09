@@ -37,13 +37,21 @@ inline void write_y(uint8_t y) {
   }
 }
 
+constexpr uint8_t SCREEN_COLS = 8;
+constexpr uint8_t SCREEN_ROWS = 4;
+constexpr uint8_t ROWS_PER_CHAR = 8;
+constexpr uint8_t PIX_PER_ROW = 2;
+constexpr uint8_t BITS_PER_BYTE = 8;
+constexpr char FIRST_CHAR = ' ';
+constexpr char LAST_CHAR = 'z';
+
 // Print string at (X, Y).
 // This needs to be called in a loop to persist on oscilliscope display.
 void print(uint8_t x, uint8_t y, const char* str) {
-  for (uint8_t row = 0; row < 8; ++row) {
+  for (uint8_t row = 0; row < ROWS_PER_CHAR; ++row) {
     // Repeat each row twice (double pixels vertically)
-    for (uint8_t dup = 0; dup < 2; ++dup) {
-      for (uint8_t col_byte = 0; col_byte < 8; ++col_byte) {
+    for (uint8_t row_pix = 0; row_pix < PIX_PER_ROW; ++row_pix) {
+      for (uint8_t col_byte = 0; col_byte < SCREEN_COLS; ++col_byte) {
         // Read ASCII code for current character
         char c = str[col_byte];
 
@@ -52,23 +60,24 @@ void print(uint8_t x, uint8_t y, const char* str) {
           break;
 
         // Skip non-printable characters
-        if (c < ' ' || c > 'z')
+        if (c < FIRST_CHAR || c > LAST_CHAR)
           continue;
 
         // Look-up scanline for character at current row
-        uint8_t scan_byte = pgm_read_byte(&CHAR_ROM[(c - 0x20) * 8 + row]);
+        uint16_t scan_index = (c - FIRST_CHAR) * ROWS_PER_CHAR + row;
+        uint8_t scan_data = pgm_read_byte(&CHAR_ROM[scan_index]);
 
         // Skip blank scanlines
-        if (scan_byte == 0)
+        if (scan_data == 0)
           continue;
 
         // Write Y only if we find a non-blank scanline
-        write_y((y + row) * 2 + dup);
+        write_y((y + row) * PIX_PER_ROW + row_pix);
 
         // Write X for each set pixel
-        for (uint8_t col_bit = 0; col_bit < 8; ++col_bit, scan_byte <<= 1) {
-          if (scan_byte >= 0x80) {
-            write_x(x + col_byte * 8 + col_bit);
+        for (uint8_t col_bit = 0; col_bit < BITS_PER_BYTE; ++col_bit, scan_data <<= 1) {
+          if (scan_data >= 0x80) { // if high bit (current pixel) is set...
+            write_x(x + col_byte * BITS_PER_BYTE + col_bit);
           }
         }
       }
@@ -77,12 +86,12 @@ void print(uint8_t x, uint8_t y, const char* str) {
 }
 
 // Character buffer for text messages
-char SCREEN_RAM[4][8];
+char SCREEN_RAM[SCREEN_ROWS][SCREEN_COLS];
 
 // Write screen buffer to display
 void print_screen() {
-  for (uint8_t row = 0; row < 4; ++row) {
-    print(0, row*8, SCREEN_RAM[row]);
+  for (uint8_t row = 0; row < SCREEN_ROWS; ++row) {
+    print(0, row * ROWS_PER_CHAR, SCREEN_RAM[row]);
   }
 }
 
@@ -91,77 +100,82 @@ uCLI::IdleFn idle_fn = print_screen;
 
 // Clear each row of screen buffer
 void clear_screen(uCLI::Args) {
-  SCREEN_RAM[0][0] = '\0';
-  SCREEN_RAM[1][0] = '\0';
-  SCREEN_RAM[2][0] = '\0';
-  SCREEN_RAM[3][0] = '\0';
+  for (uint8_t row = 0; row < SCREEN_ROWS; ++row) {
+    SCREEN_RAM[row][0] = '\0';
+  }
   idle_fn = print_screen;
 }
 
 // Copy logo to screen buffer
 void init_logo(uCLI::Args) {
-  strncpy(SCREEN_RAM[0], "````````", 8);
-  strncpy(SCREEN_RAM[1], "Trevor", 8);
-  strncpy(SCREEN_RAM[2], "  Makes!", 8);
-  strncpy(SCREEN_RAM[3], "````````", 8);
+  strncpy(SCREEN_RAM[0], "````````", SCREEN_COLS);
+  strncpy(SCREEN_RAM[1], "Trevor  ", SCREEN_COLS);
+  strncpy(SCREEN_RAM[2], "  Makes!", SCREEN_COLS);
+  strncpy(SCREEN_RAM[3], "````````", SCREEN_COLS);
   idle_fn = print_screen;
 }
 
 // Scroll screen buffer and add message at bottom
 void write_msg(uCLI::Args args) {
   char* message = args.remainder();
-  strncpy(SCREEN_RAM[0], SCREEN_RAM[1], 8);
-  strncpy(SCREEN_RAM[1], SCREEN_RAM[2], 8);
-  strncpy(SCREEN_RAM[2], SCREEN_RAM[3], 8);
-  strncpy(SCREEN_RAM[3], message, 8);
+  // Copy line [1] to [0], line [2] to [1], and so on to scroll up
+  for (uint8_t row = 1; row < SCREEN_ROWS; ++row) {
+    strncpy(SCREEN_RAM[row - 1], SCREEN_RAM[row], SCREEN_COLS);
+  }
+  // Copy message into now vacant line at bottom
+  strncpy(SCREEN_RAM[SCREEN_ROWS - 1], message, SCREEN_COLS);
   idle_fn = print_screen;
 }
 
+constexpr uint8_t SIN_STEPS = 128;
+constexpr double RAD_PER_STEP = 2. * PI / double(SIN_STEPS);
+
 // Lookup table for cached sine values
-uint8_t SINE_TABLE[256];
+uint8_t SINE_TABLE[SIN_STEPS];
 
 // Output sine and cosine to X and Y channels
 void draw_circle() {
-  uint8_t i = 0;
-  do {
-    // Shift phase of second channel by 90° (64/256) so we have sine and cosine
+  for (uint8_t i = 0; i < SIN_STEPS; ++i) {
+    // Shift phase of second channel by 90° (steps/4) so we have sine and cosine
     PortB::write(SINE_TABLE[i]);
-    PortC::write(SINE_TABLE[uint8_t(i + 64)]);
-  } while (++i != 0); // Loop until i wraps from 255 back to 0
+    PortC::write(SINE_TABLE[(i + (SIN_STEPS / 4)) % SIN_STEPS]);
+  }
 }
 
 // Start drawing circle in idle loop
 void init_circle(uCLI::Args) {
   // Compute sine lookup table
-  uint8_t i = 0;
-  do {
-    // Domain: 0 to 2π in 256 steps, Range: 0 to 62
-    SINE_TABLE[i] = uint8_t(31.f * (1.f + sin(i * (PI / 128.f))));
-  } while (++i != 0); // Loop until i wraps from 255 back to 0
+  for (uint8_t i = 0; i < SIN_STEPS; ++i) {
+    // Domain: 0 to 2π, Range: 0 to 62
+    SINE_TABLE[i] = uint8_t(31. * (1. + sin(i * RAD_PER_STEP)) + 0.5);
+  }
 
   // Switch idle function to draw circle
   idle_fn = draw_circle;
 }
 
+constexpr uint8_t BITMAP_ROWS = 64;
+constexpr uint8_t BITMAP_COLS = 8;
+
 const uint8_t* bitmap_ptr;
 
 void draw_bitmap() {
-  for (uint8_t row = 0; row < 64; ++row) {
-    for (uint8_t col_byte = 0; col_byte < 8; ++col_byte) {
+  for (uint8_t row = 0; row < BITMAP_ROWS; ++row) {
+    for (uint8_t col_byte = 0; col_byte < BITMAP_COLS; ++col_byte) {
       // Read next byte of current scanline
-      uint8_t scan_byte = pgm_read_byte(&bitmap_ptr[row * 8 + col_byte]);
+      uint8_t scan_data = pgm_read_byte(&bitmap_ptr[row * BITMAP_COLS + col_byte]);
 
       // Skip blank scanlines
-      if (scan_byte == 0)
+      if (scan_data == 0)
         continue;
 
       // Write Y only if we find a non-blank scanline
       write_y(row);
 
       // Write X for each set pixel
-      for (uint8_t col_bit = 0; col_bit < 8; ++col_bit, scan_byte <<= 1) {
-        if (scan_byte >= 0x80) {
-          write_x(col_byte * 8 + col_bit);
+      for (uint8_t col_bit = 0; col_bit < BITS_PER_BYTE; ++col_bit, scan_data <<= 1) {
+        if (scan_data >= 0x80) { // if high bit (current pixel) is set...
+          write_x(col_byte * BITS_PER_BYTE + col_bit);
         }
       }
     }
