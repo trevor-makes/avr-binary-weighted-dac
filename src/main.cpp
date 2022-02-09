@@ -7,6 +7,9 @@
 
 #include "rom_data.hpp"
 
+// Function to call while waiting for serial input
+uCLI::IdleFn idle_fn = nullptr;
+
 #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO)
   // For ATmega 328p boards, the two highest bits of ports B and C are
   // unavailable, so we set a mask to prevent writing to these bits.
@@ -62,9 +65,8 @@ constexpr uint8_t PIX_PER_ROW = 2;
 constexpr char FIRST_CHAR = ' ';
 constexpr char LAST_CHAR = 'z';
 
-// Print string at (X, Y).
-// This needs to be called in a loop to persist on oscilliscope display.
-void print(uint8_t x, uint8_t y, const char* str) {
+// Draw string at (X, Y)
+void draw_string(uint8_t x, uint8_t y, const char* str) {
   for (uint8_t row = 0; row < ROWS_PER_CHAR; ++row) {
     // Repeat each row twice (double pixels vertically)
     for (uint8_t row_pix = 0; row_pix < PIX_PER_ROW; ++row_pix) {
@@ -96,22 +98,19 @@ void print(uint8_t x, uint8_t y, const char* str) {
 // Character buffer for text messages
 char SCREEN_RAM[SCREEN_ROWS][SCREEN_COLS];
 
-// Write screen buffer to display
-void print_screen() {
+// Draw each row of screen buffer
+void draw_screen() {
   for (uint8_t row = 0; row < SCREEN_ROWS; ++row) {
-    print(0, row * ROWS_PER_CHAR, SCREEN_RAM[row]);
+    draw_string(0, row * ROWS_PER_CHAR, SCREEN_RAM[row]);
   }
 }
-
-// Function to call while waiting for serial input
-uCLI::IdleFn idle_fn = print_screen;
 
 // Clear each row of screen buffer
 void clear_screen(uCLI::Args) {
   for (uint8_t row = 0; row < SCREEN_ROWS; ++row) {
     SCREEN_RAM[row][0] = '\0';
   }
-  idle_fn = print_screen;
+  idle_fn = draw_screen;
 }
 
 // Copy logo to screen buffer
@@ -120,19 +119,23 @@ void init_logo(uCLI::Args) {
   strncpy(SCREEN_RAM[1], "Trevor  ", SCREEN_COLS);
   strncpy(SCREEN_RAM[2], "  Makes!", SCREEN_COLS);
   strncpy(SCREEN_RAM[3], "````````", SCREEN_COLS);
-  idle_fn = print_screen;
+  idle_fn = draw_screen;
 }
 
-// Scroll screen buffer and add message at bottom
-void write_msg(uCLI::Args args) {
+// Scroll screen buffer and print message to bottom row
+void print_message(uCLI::Args args) {
   char* message = args.remainder();
+
   // Copy line [1] to [0], line [2] to [1], and so on to scroll up
   for (uint8_t row = 1; row < SCREEN_ROWS; ++row) {
     strncpy(SCREEN_RAM[row - 1], SCREEN_RAM[row], SCREEN_COLS);
   }
+
   // Copy message into now vacant line at bottom
   strncpy(SCREEN_RAM[SCREEN_ROWS - 1], message, SCREEN_COLS);
-  idle_fn = print_screen;
+
+  // Set idle function to draw screen buffer
+  idle_fn = draw_screen;
 }
 
 constexpr uint8_t SIN_STEPS = 128;
@@ -152,13 +155,12 @@ void draw_circle() {
 
 // Start drawing circle in idle loop
 void init_circle(uCLI::Args) {
-  // Compute sine lookup table
+  // Compute sine lookup table with domain [0, 2π) and range [0, 62]
   for (uint8_t i = 0; i < SIN_STEPS; ++i) {
-    // Domain: 0 to 2π, Range: 0 to 62
     SINE_TABLE[i] = uint8_t(31. * (1. + sin(i * RAD_PER_STEP)) + 0.5);
   }
 
-  // Switch idle function to draw circle
+  // Set idle function to draw circle
   idle_fn = draw_circle;
 }
 
@@ -167,6 +169,7 @@ constexpr uint8_t BITMAP_COLS = 8;
 
 const uint8_t* bitmap_ptr;
 
+// Trace set bitmap pixels with X and Y
 void draw_bitmap() {
   for (uint8_t row = 0; row < BITMAP_ROWS; ++row) {
     for (uint8_t col_byte = 0; col_byte < BITMAP_COLS; ++col_byte) {
@@ -181,11 +184,13 @@ void draw_bitmap() {
   }
 }
 
+// Start drawing Doge bitmap in idle loop
 void init_doge(uCLI::Args) {
   bitmap_ptr = DOGE_ROM;
   idle_fn = draw_bitmap;
 }
 
+// Start drawing Pepe bitmap in idle loop
 void init_pepe(uCLI::Args) {
   bitmap_ptr = PEPE_ROM;
   idle_fn = draw_bitmap;
@@ -207,7 +212,7 @@ void loop() {
   static const uCLI::Command commands[] = {
     { "logo", init_logo },
     { "clear", clear_screen },
-    { "write", write_msg },
+    { "print", print_message },
     { "circle", init_circle },
     { "doge", init_doge },
     { "pepe", init_pepe },
