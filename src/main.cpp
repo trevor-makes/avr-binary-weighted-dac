@@ -21,6 +21,22 @@
 constexpr bool FLIP_X = true;
 constexpr bool FLIP_Y = true;
 
+inline void write_x(uint8_t x) {
+  if (FLIP_X) {
+    PortB::write(63 - x);
+  } else {
+    PortB::write(x);
+  }
+}
+
+inline void write_y(uint8_t y) {
+  if (FLIP_Y) {
+    PortC::write(63 - y);
+  } else {
+    PortC::write(y);
+  }
+}
+
 // Print string at (X, Y).
 // This needs to be called in a loop to persist on oscilliscope display.
 void print(uint8_t x, uint8_t y, const char* str) {
@@ -28,6 +44,7 @@ void print(uint8_t x, uint8_t y, const char* str) {
     // Repeat each row twice (double pixels vertically)
     for (uint8_t dup = 0; dup < 2; ++dup) {
       for (uint8_t col = 0; col < 8; ++col) {
+        // Read ASCII code for current character
         char c = str[col];
 
         // End row early if we find end of string (null terminator)
@@ -46,20 +63,12 @@ void print(uint8_t x, uint8_t y, const char* str) {
           continue;
 
         // Write Y only if we find a non-blank scanline
-        if (FLIP_Y) {
-          PortC::write(63 - ((y + row) * 2 + dup));
-        } else {
-          PortC::write((y + row) * 2 + dup);
-        }
+        write_y((y + row) * 2 + dup);
 
         // Write X for each set pixel
         for (uint8_t i = 0; i < 8; ++i, scan <<= 1) {
           if (scan >= 0x80) {
-            if (FLIP_X) {
-              PortB::write(63 - (x + col * 8 + i));
-            } else {
-              PortB::write(x + col * 8 + i);
-            }
+            write_x(x + col * 8 + i);
           }
         }
       }
@@ -144,20 +153,12 @@ void draw_bitmap() {
         continue;
 
       // Write Y only if we find a non-blank scanline
-      if (FLIP_Y) {
-        PortC::write(63 - row);
-      } else {
-        PortC::write(row);
-      }
+      write_y(row);
 
       // Write X for each set pixel
       for (uint8_t i = 0; i < 8; ++i, scan <<= 1) {
         if (scan >= 0x80) {
-          if (FLIP_X) {
-            PortB::write(63 - (col * 8 + i));
-          } else {
-            PortB::write(col * 8 + i);
-          }
+          write_x(col * 8 + i);
         }
       }
     }
