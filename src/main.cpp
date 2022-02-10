@@ -41,6 +41,7 @@ inline void write_y(uint8_t y) {
 }
 
 constexpr uint8_t BITS_PER_BYTE = 8;
+constexpr uint16_t US_PER_PIXEL = 5;
 
 inline void write_bits(uint8_t x, uint8_t y, uint8_t bits) {
   // Skip blank scanlines
@@ -54,6 +55,9 @@ inline void write_bits(uint8_t x, uint8_t y, uint8_t bits) {
   for (uint8_t i = 0; i < BITS_PER_BYTE; ++i, bits <<= 1) {
     if (bits >= 0x80) { // if high bit is set...
       write_x(x + i);
+
+      // Hold position briefly to normalize the intensity of each pixel
+      delayMicroseconds(US_PER_PIXEL);
     }
   }
 }
