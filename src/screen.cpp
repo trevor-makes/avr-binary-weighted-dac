@@ -72,7 +72,7 @@ void init_logo(uCLI::Args) {
 
 // Scroll screen buffer and print message to bottom row
 void print_message(uCLI::Args args) {
-  char* message = args.remainder();
+  const char* message = args.next();
 
   // Copy line [1] to [0], line [2] to [1], and so on to scroll up
   for (uint8_t row = 1; row < SCREEN_ROWS; ++row) {
