@@ -13,7 +13,7 @@ using uCLI::Tokens;
 // Function to call while waiting for serial input
 extern uCLI::IdleFn idle_fn;
 
-void init_circle(StreamEx&, Tokens);
+void init_sines(StreamEx&, Tokens);
 
 void clear_screen(StreamEx&, Tokens);
 void init_logo(StreamEx&, Tokens);

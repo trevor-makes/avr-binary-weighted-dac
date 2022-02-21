@@ -30,7 +30,7 @@ void loop() {
     { "logo", init_logo },
     { "clear", clear_screen },
     { "print", print_message },
-    { "circle", init_circle },
+    { "sines", init_sines },
     { "doge", init_doge },
     { "pepe", init_pepe },
   };
