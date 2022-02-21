@@ -10,14 +10,15 @@
 // Function to call while waiting for serial input
 uCLI::IdleFn idle_fn = nullptr;
 
-uCLI::StreamEx serialEx {Serial};
+uCLI::StreamEx serialEx(Serial);
+uCLI::CLI<> serialCLI(serialEx);
 
 void setup() {
   // Configure I/O ports for output
   init_ports();
 
   // Call init_logo with empty uCLI::Args
-  init_logo({});
+  init_logo(serialEx, {});
 
   // Establish serial connection with computer
   Serial.begin(9600);
@@ -35,5 +36,5 @@ void loop() {
   };
 
   // Prompt for a command from the list while looping over the idle function
-  uCLI::run_command(serialEx, commands, idle_fn);
+  serialCLI.prompt(commands, idle_fn);
 }

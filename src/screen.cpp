@@ -54,7 +54,7 @@ void draw_screen() {
 }
 
 // Clear each row of screen buffer
-void clear_screen(uCLI::Args) {
+void clear_screen(StreamEx&, Tokens) {
   for (uint8_t row = 0; row < SCREEN_ROWS; ++row) {
     SCREEN_RAM[row][0] = '\0';
   }
@@ -62,7 +62,7 @@ void clear_screen(uCLI::Args) {
 }
 
 // Copy logo to screen buffer
-void init_logo(uCLI::Args) {
+void init_logo(StreamEx&, Tokens) {
   strncpy(SCREEN_RAM[0], "````````", SCREEN_COLS);
   strncpy(SCREEN_RAM[1], "Trevor  ", SCREEN_COLS);
   strncpy(SCREEN_RAM[2], "  Makes!", SCREEN_COLS);
@@ -71,7 +71,7 @@ void init_logo(uCLI::Args) {
 }
 
 // Scroll screen buffer and print message to bottom row
-void print_message(uCLI::Args args) {
+void print_message(StreamEx&, Tokens args) {
   const char* message = args.next();
 
   // Copy line [1] to [0], line [2] to [1], and so on to scroll up

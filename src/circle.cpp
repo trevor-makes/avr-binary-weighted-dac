@@ -18,7 +18,7 @@ void draw_circle() {
 }
 
 // Start drawing circle in idle loop
-void init_circle(uCLI::Args) {
+void init_circle(StreamEx&, Tokens) {
   // Compute sine lookup table with domain [0, 2π) and range [0, 62]
   for (uint8_t i = 0; i < SIN_STEPS; ++i) {
     SINE_TABLE[i] = uint8_t(31. * (1. + sin(i * RAD_PER_STEP)) + 0.5);
