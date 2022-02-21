@@ -8,19 +8,21 @@
 #include <Arduino.h>
 
 using uCLI::StreamEx;
+using uCLI::IdleFn;
 using uCLI::Tokens;
+using uCLI::CLI;
 
-// Function to call while waiting for serial input
-extern uCLI::IdleFn idle_fn;
+extern IdleFn idle_fn;
+extern StreamEx serialEx;
 
-void init_sines(StreamEx&, Tokens);
+void init_sines(Tokens);
 
-void clear_screen(StreamEx&, Tokens);
-void init_logo(StreamEx&, Tokens);
-void print_message(StreamEx&, Tokens);
+void clear_screen(Tokens);
+void init_logo(Tokens);
+void print_message(Tokens);
 
-void init_doge(StreamEx&, Tokens);
-void init_pepe(StreamEx&, Tokens);
+void init_doge(Tokens);
+void init_pepe(Tokens);
 
 #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO)
   // For ATmega 328p boards, the two highest bits of ports B and C are

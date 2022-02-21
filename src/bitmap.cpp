@@ -26,13 +26,13 @@ void draw_bitmap() {
 }
 
 // Start drawing Doge bitmap in idle loop
-void init_doge(StreamEx&, Tokens) {
+void init_doge(Tokens) {
   bitmap_ptr = DOGE_ROM;
   idle_fn = draw_bitmap;
 }
 
 // Start drawing Pepe bitmap in idle loop
-void init_pepe(StreamEx&, Tokens) {
+void init_pepe(Tokens) {
   bitmap_ptr = PEPE_ROM;
   idle_fn = draw_bitmap;
 }

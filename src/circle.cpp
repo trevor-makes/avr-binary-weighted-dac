@@ -24,12 +24,12 @@ T clamp(T val, T low, T high) {
 }
 
 // Start drawing circle in idle loop
-void init_sines(StreamEx& stream, Tokens args) {
+void init_sines(Tokens args) {
   if (args.has_next()) {
     steps = clamp<int>(atoi(args.next()), MIN_STEPS, MAX_STEPS);
-    stream.print("Using ");
-    stream.print(steps);
-    stream.println(" steps in sine table");
+    serialEx.print("Using ");
+    serialEx.print(steps);
+    serialEx.println(" steps in sine table");
   }
   const double RAD_PER_STEP = 2. * PI / double(steps);
 
