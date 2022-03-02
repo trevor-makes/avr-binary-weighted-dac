@@ -24,7 +24,7 @@ T clamp(T val, T low, T high) {
 }
 
 // Start drawing circle in idle loop
-void init_sines(Tokens args) {
+void init_sines(Args args) {
   if (args.has_next()) {
     steps = clamp<int>(atoi(args.next()), MIN_STEPS, MAX_STEPS);
     serialEx.print("Using ");

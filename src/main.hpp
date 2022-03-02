@@ -9,20 +9,20 @@
 
 using uCLI::StreamEx;
 using uCLI::IdleFn;
-using uCLI::Tokens;
+using uCLI::Args;
 using uCLI::CLI;
 
 extern IdleFn idle_fn;
 extern StreamEx serialEx;
 
-void init_sines(Tokens);
+void init_sines(Args);
 
-void clear_screen(Tokens);
-void init_logo(Tokens);
-void print_message(Tokens);
+void clear_screen(Args);
+void init_logo(Args);
+void print_message(Args);
 
-void init_doge(Tokens);
-void init_pepe(Tokens);
+void init_doge(Args);
+void init_pepe(Args);
 
 #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO)
   // For ATmega 328p boards, the two highest bits of ports B and C are
