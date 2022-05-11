@@ -34,5 +34,5 @@ void loop() {
   };
 
   // Prompt for a command from the list while looping over the idle function
-  serialCLI.prompt(commands, idle_fn);
+  serialCLI.run_once(commands, idle_fn);
 }
