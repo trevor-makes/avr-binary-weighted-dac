@@ -6,21 +6,16 @@ extern const uint8_t DOGE_ROM[] PROGMEM;
 extern const uint8_t PEPE_ROM[] PROGMEM;
 
 constexpr uint8_t BITMAP_ROWS = 64;
-constexpr uint8_t BITMAP_COLS = 8;
+constexpr uint8_t BITMAP_COLS = 64;
 
 const uint8_t* bitmap_ptr;
 
 // Trace set bitmap pixels with X and Y
 void draw_bitmap() {
+  const uint8_t* bitmap_iter = bitmap_ptr;
   for (uint8_t row = 0; row < BITMAP_ROWS; ++row) {
-    for (uint8_t col_byte = 0; col_byte < BITMAP_COLS; ++col_byte) {
-      // Read byte at current bitmap index
-      uint16_t bitmap_index = row * BITMAP_COLS + col_byte;
-      uint8_t scan_data = pgm_read_byte(&bitmap_ptr[bitmap_index]);
-
-      // Write X, Y for set bits
-      uint8_t col_bit = col_byte * BITS_PER_BYTE;
-      write_bits(col_bit, row, scan_data);
+    for (uint8_t col = 0; col < BITMAP_COLS; col += BITS_PER_BYTE) {
+      write_bits(col, row, pgm_read_byte(bitmap_iter++));
     }
   }
 }

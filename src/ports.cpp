@@ -31,27 +31,13 @@ void init_ports() {
   YAxis::config_output();
 }
 
-// Option to invert axis in case oscilloscope does not support this
-constexpr bool INVERT_X = true;
-constexpr bool INVERT_Y = true;
-
 void write_x(uint8_t x) {
-  if (INVERT_X) {
-    XAxis::write(63 - x);
-  } else {
-    XAxis::write(x);
-  }
+  XAxis::write(x);
 }
 
 void write_y(uint8_t y) {
-  if (INVERT_Y) {
-    YAxis::write(63 - y);
-  } else {
-    YAxis::write(y);
-  }
+  YAxis::write(y);
 }
-
-constexpr uint16_t US_PER_PIXEL = 5;
 
 void write_bits(uint8_t x, uint8_t y, uint8_t bits) {
   // Skip blank scanlines
@@ -62,12 +48,11 @@ void write_bits(uint8_t x, uint8_t y, uint8_t bits) {
   write_y(y);
 
   // Write X for each set bit
-  for (uint8_t i = 0; i < BITS_PER_BYTE; ++i, bits <<= 1) {
+  do {
     if (bits >= 0x80) { // if high bit is set...
-      write_x(x + i);
-
-      // Hold position briefly to normalize the intensity of each pixel
-      delayMicroseconds(US_PER_PIXEL);
+      write_x(x);
     }
-  }
+    bits <<= 1;
+    ++x;
+  } while (bits > 0);
 }
