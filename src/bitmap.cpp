@@ -19,8 +19,8 @@ void draw_bitmap() {
       uint8_t scan_data = pgm_read_byte(&bitmap_ptr[bitmap_index]);
 
       // Write X, Y for set bits
-      uint8_t col = col_byte * BITS_PER_BYTE;
-      write_bits(col, row, scan_data);
+      uint8_t col_bit = col_byte * BITS_PER_BYTE;
+      write_bits(col_bit, row, scan_data);
     }
   }
 }

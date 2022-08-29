@@ -1,7 +1,5 @@
 // Copyright (c) 2022 Trevor Makes
 
-#include <Arduino.h>
-
 #include "main.hpp"
 
 extern const uint8_t CHAR_ROM[] PROGMEM;
