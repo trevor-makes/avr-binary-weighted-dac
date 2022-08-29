@@ -2,15 +2,16 @@
 
 #pragma once
 
-#include "uIO.hpp"
-#include "uCLI.hpp"
+#include "core/io.hpp"
+#include "core/cli.hpp"
 
 #include <Arduino.h>
 
-using uCLI::StreamEx;
-using uCLI::IdleFn;
-using uCLI::Args;
-using uCLI::CLI;
+using core::serial::StreamEx;
+using core::cli::IdleFn;
+using core::cli::Args;
+using core::cli::Command;
+using core::cli::CLI;
 
 extern IdleFn idle_fn;
 extern StreamEx serialEx;
@@ -25,11 +26,23 @@ void init_doge(Args);
 void init_pepe(Args);
 
 #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO)
+  CORE_PORT(B)
+  CORE_PORT(C)
+
   // For ATmega 328p boards, the two highest bits of ports B and C are
   // unavailable, so we set a mask to prevent writing to these bits.
   // This allows values from 0 to 63 to be written to each port.
-  using PortB = uIO::PortB::Mask<0x3F>;
-  using PortC = uIO::PortC::Mask<0x3F>;
+  //         x |         | C5 - RΩ
+  //         x |         | C4 - 2RΩ
+  //         x |         | C3 - 4RΩ
+  //         x | Arduino | C2 - 8RΩ
+  // 32RΩ - B0 |   NANO  | C1 - 16RΩ
+  // 16RΩ - B1 |         | C0 - 32RΩ
+  //  8RΩ - B2 |   ___   | x
+  //  4RΩ - B3 |  |USB|  | x
+  //  2RΩ - B4 |__|___|__| B5 - RΩ
+  using XAxis = PortB::Mask<0x3F>;
+  using YAxis = PortC::Mask<0x3F>;
 #else
   #error The I/O port mapping has not been defined for the target platform
 #endif
@@ -39,23 +52,23 @@ constexpr bool INVERT_X = true;
 constexpr bool INVERT_Y = true;
 
 inline void init_ports() {
-  PortB::config_output();
-  PortC::config_output();
+  XAxis::config_output();
+  YAxis::config_output();
 }
 
 inline void write_x(uint8_t x) {
   if (INVERT_X) {
-    PortB::write(63 - x);
+    XAxis::write(63 - x);
   } else {
-    PortB::write(x);
+    XAxis::write(x);
   }
 }
 
 inline void write_y(uint8_t y) {
   if (INVERT_Y) {
-    PortC::write(63 - y);
+    YAxis::write(63 - y);
   } else {
-    PortC::write(y);
+    YAxis::write(y);
   }
 }
 

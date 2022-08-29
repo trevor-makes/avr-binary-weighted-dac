@@ -1,10 +1,5 @@
 // Copyright (c) 2022 Trevor Makes
 
-#include "uIO.hpp"
-#include "uCLI.hpp"
-
-#include <Arduino.h>
-
 #include "main.hpp"
 
 IdleFn idle_fn = nullptr; // Function to call while waiting for serial input
@@ -24,7 +19,7 @@ void setup() {
 }
 
 void loop() {
-  static const uCLI::Command commands[] = {
+  static const Command commands[] = {
     { "logo", init_logo },
     { "clear", clear_screen },
     { "print", print_message },
