@@ -12,6 +12,9 @@ constexpr size_t BITMAP_BYTES = BITMAP_ROWS * BITMAP_COL_BYTES;
 
 uint8_t BITMAP_RAM[BITMAP_BYTES];
 
+bool is_flip_v = false;
+bool is_flip_h = false;
+
 // Trace set bitmap pixels with X and Y
 void draw_bitmap() {
   const uint8_t* bitmap_ptr = BITMAP_RAM;
@@ -22,7 +25,7 @@ void draw_bitmap() {
   }
 }
 
-void flip_vertical(Args) {
+void flip_vertical_impl() {
   for (uint8_t row = 0; row < BITMAP_ROWS / 2; ++row) {
     uint16_t offset1 = row * BITMAP_COL_BYTES;
     uint16_t offset2 = (BITMAP_ROWS - row - 1) * BITMAP_COL_BYTES;
@@ -34,12 +37,17 @@ void flip_vertical(Args) {
   }
 }
 
+void flip_vertical(Args) {
+  is_flip_v = !is_flip_v;
+  flip_vertical_impl();
+}
+
 uint8_t reverse_bits(uint8_t b) {
   // http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits
   return ((b * 0x0802LU & 0x22110LU) | (b * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16; 
 }
 
-void flip_horizontal(Args) {
+void flip_horizontal_impl() {
   for (uint16_t offset = 0; offset < BITMAP_BYTES; offset += BITMAP_COL_BYTES) {
     for (uint8_t col = 0; col < BITMAP_COL_BYTES / 2; ++col) {
       uint16_t offset1 = offset + col;
@@ -51,6 +59,21 @@ void flip_horizontal(Args) {
   }
 }
 
+void flip_horizontal(Args) {
+  is_flip_h = !is_flip_h;
+  flip_horizontal_impl();
+}
+
+void apply_conditional_flip() {
+  if (is_flip_h) flip_horizontal_impl();
+  if (is_flip_v) flip_vertical_impl();
+}
+
+void copy_bitmap(const uint8_t* source) {
+  memcpy_P(BITMAP_RAM, source, BITMAP_BYTES);
+  apply_conditional_flip();
+}
+
 struct API : public core::mon::Base<API> {
   static StreamEx& get_stream() { return serialEx; }
   static uint8_t read_byte(uint16_t addr) { return BITMAP_RAM[addr]; }
@@ -58,18 +81,21 @@ struct API : public core::mon::Base<API> {
 };
 
 void save_bitmap(Args) {
+  apply_conditional_flip();
   core::mon::impl_save<API>(0, BITMAP_BYTES);
+  apply_conditional_flip();
 }
 
 void load_bitmap(Args args) {
   core::mon::cmd_load<API>(args);
+  apply_conditional_flip();
 }
 
 extern const uint8_t DOGE_ROM[] PROGMEM;
 
 // Start drawing Doge bitmap in idle loop
 void init_doge(Args) {
-  memcpy_P(BITMAP_RAM, DOGE_ROM, BITMAP_BYTES);
+  copy_bitmap(DOGE_ROM);
   idle_fn = draw_bitmap;
 }
 
@@ -77,7 +103,7 @@ extern const uint8_t PEPE_ROM[] PROGMEM;
 
 // Start drawing Pepe bitmap in idle loop
 void init_pepe(Args) {
-  memcpy_P(BITMAP_RAM, PEPE_ROM, BITMAP_BYTES);
+  copy_bitmap(PEPE_ROM);
   idle_fn = draw_bitmap;
 }
 
