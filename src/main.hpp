@@ -23,6 +23,8 @@ void print_message(Args);
 
 void init_doge(Args);
 void init_pepe(Args);
+void flip_vertical(Args);
+void flip_horizontal(Args);
 
 void init_ports();
 void write_x(uint8_t x);

@@ -26,6 +26,8 @@ void loop() {
     { "sines", init_sines },
     { "doge", init_doge },
     { "pepe", init_pepe },
+    { "fliph", flip_horizontal },
+    { "flipv", flip_vertical },
   };
 
   // Prompt for a command from the list while looping over the idle function

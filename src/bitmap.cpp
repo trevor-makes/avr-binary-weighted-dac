@@ -2,39 +2,73 @@
 
 #include "main.hpp"
 
-extern const uint8_t DOGE_ROM[] PROGMEM;
-extern const uint8_t PEPE_ROM[] PROGMEM;
-
 constexpr uint8_t BITMAP_ROWS = 64;
-constexpr uint8_t BITMAP_COLS = 64;
+constexpr uint8_t BITMAP_COL_BYTES = 8;
 constexpr uint8_t BITS_PER_BYTE = 8;
+constexpr uint8_t BITMAP_COL_BITS = BITMAP_COL_BYTES * BITS_PER_BYTE;
+constexpr size_t BITMAP_BYTES = BITMAP_ROWS * BITMAP_COL_BYTES;
 
-const uint8_t* bitmap_ptr;
+uint8_t BITMAP_RAM[BITMAP_BYTES];
 
 // Trace set bitmap pixels with X and Y
 void draw_bitmap() {
-  const uint8_t* bitmap_iter = bitmap_ptr;
+  const uint8_t* bitmap_ptr = BITMAP_RAM;
   for (uint8_t row = 0; row < BITMAP_ROWS; ++row) {
-    for (uint8_t col = 0; col < BITMAP_COLS; col += BITS_PER_BYTE) {
-      write_bits(col, row, pgm_read_byte(bitmap_iter++));
+    for (uint8_t col = 0; col < BITMAP_COL_BITS; col += BITS_PER_BYTE) {
+      write_bits(col, row, *bitmap_ptr++);
     }
   }
 }
 
+void flip_vertical(Args) {
+  for (uint8_t row = 0; row < BITMAP_ROWS / 2; ++row) {
+    uint16_t offset1 = row * BITMAP_COL_BYTES;
+    uint16_t offset2 = (BITMAP_ROWS - row - 1) * BITMAP_COL_BYTES;
+    for (uint8_t col = 0; col < BITMAP_COL_BYTES; ++col) {
+      uint8_t swap = BITMAP_RAM[offset1 + col];
+      BITMAP_RAM[offset1 + col] = BITMAP_RAM[offset2 + col];
+      BITMAP_RAM[offset2 + col] = swap;
+    }
+  }
+}
+
+uint8_t reverse_bits(uint8_t b) {
+  // http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits
+  return ((b * 0x0802LU & 0x22110LU) | (b * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16; 
+}
+
+void flip_horizontal(Args) {
+  for (uint16_t offset = 0; offset < BITMAP_BYTES; offset += BITMAP_COL_BYTES) {
+    for (uint8_t col = 0; col < BITMAP_COL_BYTES / 2; ++col) {
+      uint16_t offset1 = offset + col;
+      uint16_t offset2 = offset + BITMAP_COL_BYTES - col - 1;
+      uint8_t swap = reverse_bits(BITMAP_RAM[offset1]);
+      BITMAP_RAM[offset1] = reverse_bits(BITMAP_RAM[offset2]);
+      BITMAP_RAM[offset2] = swap;
+    }
+  }
+}
+
+extern const uint8_t DOGE_ROM[] PROGMEM;
+
 // Start drawing Doge bitmap in idle loop
 void init_doge(Args) {
-  bitmap_ptr = DOGE_ROM;
+  memcpy_P(BITMAP_RAM, DOGE_ROM, BITMAP_BYTES);
+  //bitmap_ptr = DOGE_ROM;
   idle_fn = draw_bitmap;
 }
 
+extern const uint8_t PEPE_ROM[] PROGMEM;
+
 // Start drawing Pepe bitmap in idle loop
 void init_pepe(Args) {
-  bitmap_ptr = PEPE_ROM;
+  memcpy_P(BITMAP_RAM, PEPE_ROM, BITMAP_BYTES);
+  //bitmap_ptr = PEPE_ROM;
   idle_fn = draw_bitmap;
 }
 
 // 64x64 1-bit Doge bitmap
-const uint8_t DOGE_ROM[] PROGMEM = {
+const uint8_t DOGE_ROM[BITMAP_BYTES] PROGMEM = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x1C, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -102,7 +136,7 @@ const uint8_t DOGE_ROM[] PROGMEM = {
 };
 
 // 64x64 1-bit Pepe bitmap
-const uint8_t PEPE_ROM[] PROGMEM = {    
+const uint8_t PEPE_ROM[BITMAP_BYTES] PROGMEM = {
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
