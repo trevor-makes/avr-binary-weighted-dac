@@ -24,8 +24,6 @@ void print_message(Args);
 void init_doge(Args);
 void init_pepe(Args);
 
-constexpr uint8_t BITS_PER_BYTE = 8;
-
 void init_ports();
 void write_x(uint8_t x);
 void write_y(uint8_t y);

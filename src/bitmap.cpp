@@ -7,6 +7,7 @@ extern const uint8_t PEPE_ROM[] PROGMEM;
 
 constexpr uint8_t BITMAP_ROWS = 64;
 constexpr uint8_t BITMAP_COLS = 64;
+constexpr uint8_t BITS_PER_BYTE = 8;
 
 const uint8_t* bitmap_ptr;
 
