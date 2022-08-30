@@ -11,10 +11,10 @@ constexpr uint8_t PIXELS_PER_ROW = 2;
 constexpr char FIRST_CHAR = ' ';
 constexpr char LAST_CHAR = 'z';
 
-void draw_string(uint8_t x, uint8_t y, const char* str) {
-  for (uint8_t col = 0; col < SCREEN_COLS; ++col) {
+void draw_string(uint8_t y, const char* str) {
+  for (uint8_t col = 0; col < SCREEN_COLS * BITS_PER_BYTE; col += BITS_PER_BYTE) {
     // Read ASCII code for current character
-    char c = str[col];
+    char c = *str++;
 
     // End early if we find end of string
     if (c == '\0')
@@ -26,16 +26,16 @@ void draw_string(uint8_t x, uint8_t y, const char* str) {
 
     // Trace each character fully before advancing to next character
     uint16_t offset = (c - FIRST_CHAR) * ROWS_PER_CHAR;
-    for (uint8_t row = 0; row < ROWS_PER_CHAR; ++row) {
+    const uint8_t* char_ptr = &CHAR_ROM[offset];
+    uint8_t row_start = y * PIXELS_PER_ROW;
+    uint8_t row_end = row_start + ROWS_PER_CHAR * PIXELS_PER_ROW;
+    for (uint8_t row = row_start; row < row_end; /*++row*/) {
       // Look-up scan data for character at current row
-      uint8_t char_data = pgm_read_byte(&CHAR_ROM[offset + row]);
-
-      uint8_t char_x = x + col * BITS_PER_BYTE;
-      uint8_t char_y = (y + row) * PIXELS_PER_ROW;
+      uint8_t char_data = pgm_read_byte(char_ptr++);//&CHAR_ROM[offset + row]);
 
       // Repeat each row to double pixels vertically
       for (uint8_t row_pixel = 0; row_pixel < PIXELS_PER_ROW; ++row_pixel) {
-        write_bits(char_x, char_y + row_pixel, char_data);
+        write_bits(col, row++, char_data);
       }
     }
   }
@@ -47,7 +47,7 @@ char SCREEN_RAM[SCREEN_ROWS][SCREEN_COLS];
 // Draw each row of screen buffer
 void draw_screen() {
   for (uint8_t row = 0; row < SCREEN_ROWS; ++row) {
-    draw_string(0, row * ROWS_PER_CHAR, SCREEN_RAM[row]);
+    draw_string(row * ROWS_PER_CHAR, SCREEN_RAM[row]);
   }
 }
 
