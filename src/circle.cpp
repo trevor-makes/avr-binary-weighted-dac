@@ -2,6 +2,8 @@
 
 #include "main.hpp"
 
+#include "core/util.hpp"
+
 constexpr uint8_t MAX_STEPS = 240;
 constexpr uint8_t MIN_STEPS = 32;
 uint8_t steps = MAX_STEPS;
@@ -18,15 +20,10 @@ void draw_sines() {
   }
 }
 
-template <typename T>
-T clamp(T val, T low, T high) {
-  return (val > high) ? high : ((val < low) ? low : val);
-}
-
 // Start drawing circle in idle loop
 void init_sines(Args args) {
   if (args.has_next()) {
-    steps = clamp<int>(atoi(args.next()), MIN_STEPS, MAX_STEPS);
+    steps = util::clamp<int>(atoi(args.next()), MIN_STEPS, MAX_STEPS);
     serialEx.print("Using ");
     serialEx.print(steps);
     serialEx.println(" steps in sine table");
