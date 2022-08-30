@@ -2,6 +2,8 @@
 
 #include "main.hpp"
 
+#include "core/mon.hpp"
+
 constexpr uint8_t BITMAP_ROWS = 64;
 constexpr uint8_t BITMAP_COL_BYTES = 8;
 constexpr uint8_t BITS_PER_BYTE = 8;
@@ -49,12 +51,25 @@ void flip_horizontal(Args) {
   }
 }
 
+struct API : public core::mon::Base<API> {
+  static StreamEx& get_stream() { return serialEx; }
+  static uint8_t read_byte(uint16_t addr) { return BITMAP_RAM[addr]; }
+  static void write_byte(uint16_t addr, uint8_t data) { BITMAP_RAM[addr % BITMAP_BYTES] = data; }
+};
+
+void save_bitmap(Args) {
+  core::mon::impl_save<API>(0, BITMAP_BYTES);
+}
+
+void load_bitmap(Args args) {
+  core::mon::cmd_load<API>(args);
+}
+
 extern const uint8_t DOGE_ROM[] PROGMEM;
 
 // Start drawing Doge bitmap in idle loop
 void init_doge(Args) {
   memcpy_P(BITMAP_RAM, DOGE_ROM, BITMAP_BYTES);
-  //bitmap_ptr = DOGE_ROM;
   idle_fn = draw_bitmap;
 }
 
@@ -63,7 +78,6 @@ extern const uint8_t PEPE_ROM[] PROGMEM;
 // Start drawing Pepe bitmap in idle loop
 void init_pepe(Args) {
   memcpy_P(BITMAP_RAM, PEPE_ROM, BITMAP_BYTES);
-  //bitmap_ptr = PEPE_ROM;
   idle_fn = draw_bitmap;
 }
 

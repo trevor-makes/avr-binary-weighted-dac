@@ -10,10 +10,11 @@ using core::serial::StreamEx;
 using core::cli::IdleFn;
 using core::cli::Args;
 using core::cli::Command;
-using core::cli::CLI;
+using CLI = core::cli::CLI<20>;
 
 extern IdleFn idle_fn;
 extern StreamEx serialEx;
+extern CLI serialCLI;
 
 void init_sines(Args);
 
@@ -25,6 +26,8 @@ void init_doge(Args);
 void init_pepe(Args);
 void flip_vertical(Args);
 void flip_horizontal(Args);
+void save_bitmap(Args);
+void load_bitmap(Args);
 
 void init_ports();
 void write_x(uint8_t x);

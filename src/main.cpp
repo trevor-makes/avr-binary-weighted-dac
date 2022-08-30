@@ -4,7 +4,7 @@
 
 IdleFn idle_fn = nullptr; // Function to call while waiting for serial input
 StreamEx serialEx(Serial); // Stream wrapper that supports ANSI escape codes
-CLI<20> serialCLI(serialEx); // Limit CLI to 20 byte line length
+CLI serialCLI(serialEx); // Limit CLI to 20 byte line length
 
 void setup() {
   // Configure I/O ports for output
@@ -28,6 +28,8 @@ void loop() {
     { "pepe", init_pepe },
     { "fliph", flip_horizontal },
     { "flipv", flip_vertical },
+    { "save", save_bitmap },
+    { "load", load_bitmap },
   };
 
   // Prompt for a command from the list while looping over the idle function
