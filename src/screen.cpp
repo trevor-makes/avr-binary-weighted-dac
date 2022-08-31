@@ -12,8 +12,12 @@ constexpr char FIRST_CHAR = '!';
 constexpr char LAST_CHAR = 'z';
 
 void draw_string(uint8_t row, const char* str) {
-  const uint8_t row_end = row + ROWS_PER_CHAR;
-  for (uint8_t col = 0; col < SCREEN_COLS * COLS_PER_CHAR; col += COLS_PER_CHAR) {
+  uint8_t* col_ptr = BITMAP_RAM + row * ROWS_PER_CHAR * SCREEN_COLS;
+
+  // Clear line
+  memset(col_ptr, 0, SCREEN_COLS * ROWS_PER_CHAR);
+
+  for (uint8_t col = 0; col < SCREEN_COLS; ++col) {
     // Read ASCII code for current character
     char c = *str++;
 
@@ -28,54 +32,44 @@ void draw_string(uint8_t row, const char* str) {
     // Trace each character fully before advancing to next character
     uint16_t char_index = (c - FIRST_CHAR) * ROWS_PER_CHAR;
     const uint8_t* char_ptr = &CHAR_ROM[char_index];
-    for (uint8_t char_row = row; char_row < row_end; ++char_row) {
-      write_bits(col, char_row, pgm_read_byte(char_ptr++));
+    for (uint8_t offset = col; offset < SCREEN_COLS * ROWS_PER_CHAR; offset += SCREEN_COLS) {
+      col_ptr[offset] = pgm_read_byte(char_ptr++);
     }
   }
 }
 
-// Character buffer for text messages
-char SCREEN_RAM[SCREEN_ROWS][SCREEN_COLS];
-
-// Draw each row of screen buffer
-void draw_screen() {
-  for (uint8_t row = 0; row < SCREEN_ROWS; ++row) {
-    draw_string(row * ROWS_PER_CHAR, SCREEN_RAM[row]);
-  }
+void clear_bitmap() {
+  memset(BITMAP_RAM, 0, SCREEN_COLS * SCREEN_ROWS * ROWS_PER_CHAR);
 }
 
 // Clear each row of screen buffer
 void clear_screen(Args) {
-  for (uint8_t row = 0; row < SCREEN_ROWS; ++row) {
-    SCREEN_RAM[row][0] = '\0';
-  }
-  idle_fn = draw_screen;
+  clear_bitmap();
+  idle_fn = draw_bitmap;
 }
 
 // Copy logo to screen buffer
 void init_logo(Args) {
-  clear_screen({});
-  strncpy(SCREEN_RAM[2], "````````", SCREEN_COLS);
-  strncpy(SCREEN_RAM[3], "Trevor  ", SCREEN_COLS);
-  strncpy(SCREEN_RAM[4], "  Makes!", SCREEN_COLS);
-  strncpy(SCREEN_RAM[5], "````````", SCREEN_COLS);
-  idle_fn = draw_screen;
+  clear_bitmap();
+  draw_string(2, "````````");
+  draw_string(3, "Trevor  ");
+  draw_string(4, "  Makes!");
+  draw_string(5, "````````");
+  idle_fn = draw_bitmap;
 }
 
 // Scroll screen buffer and print message to bottom row
 void print_message(Args args) {
   const char* message = args.next();
 
-  // Copy line [1] to [0], line [2] to [1], and so on to scroll up
-  for (uint8_t row = 1; row < SCREEN_ROWS; ++row) {
-    strncpy(SCREEN_RAM[row - 1], SCREEN_RAM[row], SCREEN_COLS);
-  }
+  // Scroll rows up from the bottom
+  memmove(BITMAP_RAM, BITMAP_RAM + SCREEN_COLS * ROWS_PER_CHAR, (SCREEN_ROWS - 1) * SCREEN_COLS * ROWS_PER_CHAR);
 
   // Copy message into now vacant line at bottom
-  strncpy(SCREEN_RAM[SCREEN_ROWS - 1], message, SCREEN_COLS);
+  draw_string(SCREEN_ROWS - 1, message);
 
   // Set idle function to draw screen buffer
-  idle_fn = draw_screen;
+  idle_fn = draw_bitmap;
 }
 
 // Commodore 64 font extracted from VICE
