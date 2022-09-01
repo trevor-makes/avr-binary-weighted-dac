@@ -10,14 +10,12 @@ constexpr uint8_t BITS_PER_BYTE = 8;
 constexpr uint8_t BITMAP_COL_BITS = BITMAP_COL_BYTES * BITS_PER_BYTE;
 constexpr size_t BITMAP_BYTES = BITMAP_ROWS * BITMAP_COL_BYTES;
 
-uint8_t BITMAP_RAM[BITMAP_BYTES];
-
-bool is_flip_v = false;
-bool is_flip_h = false;
+uint8_t BACK_BUFFER[BITMAP_BYTES];
+uint8_t FRONT_BUFFER[BITMAP_BYTES];
 
 // Trace set bitmap pixels with X and Y
 void draw_bitmap() {
-  const uint8_t* bitmap_ptr = BITMAP_RAM;
+  const uint8_t* bitmap_ptr = FRONT_BUFFER;
   for (uint8_t row = 0; row < BITMAP_ROWS; ++row) {
     for (uint8_t col = 0; col < BITMAP_COL_BITS; col += BITS_PER_BYTE) {
       write_bits(col, row, *bitmap_ptr++);
@@ -30,16 +28,11 @@ void flip_vertical_impl() {
     uint16_t offset1 = row * BITMAP_COL_BYTES;
     uint16_t offset2 = (BITMAP_ROWS - row - 1) * BITMAP_COL_BYTES;
     for (uint8_t col = 0; col < BITMAP_COL_BYTES; ++col) {
-      uint8_t swap = BITMAP_RAM[offset1 + col];
-      BITMAP_RAM[offset1 + col] = BITMAP_RAM[offset2 + col];
-      BITMAP_RAM[offset2 + col] = swap;
+      uint8_t swap = FRONT_BUFFER[offset1 + col];
+      FRONT_BUFFER[offset1 + col] = FRONT_BUFFER[offset2 + col];
+      FRONT_BUFFER[offset2 + col] = swap;
     }
   }
-}
-
-void flip_vertical(Args) {
-  is_flip_v = !is_flip_v;
-  flip_vertical_impl();
 }
 
 uint8_t reverse_bits(uint8_t b) {
@@ -52,43 +45,50 @@ void flip_horizontal_impl() {
     for (uint8_t col = 0; col < BITMAP_COL_BYTES / 2; ++col) {
       uint16_t offset1 = offset + col;
       uint16_t offset2 = offset + BITMAP_COL_BYTES - col - 1;
-      uint8_t swap = reverse_bits(BITMAP_RAM[offset1]);
-      BITMAP_RAM[offset1] = reverse_bits(BITMAP_RAM[offset2]);
-      BITMAP_RAM[offset2] = swap;
+      uint8_t swap = reverse_bits(FRONT_BUFFER[offset1]);
+      FRONT_BUFFER[offset1] = reverse_bits(FRONT_BUFFER[offset2]);
+      FRONT_BUFFER[offset2] = swap;
     }
   }
 }
 
-void flip_horizontal(Args) {
-  is_flip_h = !is_flip_h;
-  flip_horizontal_impl();
-}
+bool is_flip_v = false;
+bool is_flip_h = false;
 
-void apply_conditional_flip() {
+void update_bitmap() {
+  memcpy(FRONT_BUFFER, BACK_BUFFER, BITMAP_BYTES);
   if (is_flip_h) flip_horizontal_impl();
   if (is_flip_v) flip_vertical_impl();
+  idle_fn = draw_bitmap;
+}
+
+void flip_vertical(Args) {
+  is_flip_v = !is_flip_v;
+  update_bitmap();
+}
+
+void flip_horizontal(Args) {
+  is_flip_h = !is_flip_h;
+  update_bitmap();
 }
 
 void copy_bitmap(const uint8_t* source) {
-  memcpy_P(BITMAP_RAM, source, BITMAP_BYTES);
-  apply_conditional_flip();
+  memcpy_P(BACK_BUFFER, source, BITMAP_BYTES);
+  update_bitmap();
 }
 
 struct API : public core::mon::Base<API> {
   static StreamEx& get_stream() { return serialEx; }
-  static uint8_t read_byte(uint16_t addr) { return BITMAP_RAM[addr]; }
-  static void write_byte(uint16_t addr, uint8_t data) { BITMAP_RAM[addr % BITMAP_BYTES] = data; }
+  static uint8_t read_byte(uint16_t addr) { return BACK_BUFFER[addr]; }
+  static void write_byte(uint16_t addr, uint8_t data) { BACK_BUFFER[addr % BITMAP_BYTES] = data; }
 };
 
 void save_bitmap(Args) {
-  apply_conditional_flip();
   core::mon::impl_save<API>(0, BITMAP_BYTES);
-  apply_conditional_flip();
 }
 
 void load_bitmap(Args args) {
   core::mon::cmd_load<API>(args);
-  apply_conditional_flip();
 }
 
 extern const uint8_t DOGE_ROM[] PROGMEM;
@@ -96,7 +96,7 @@ extern const uint8_t DOGE_ROM[] PROGMEM;
 // Start drawing Doge bitmap in idle loop
 void init_doge(Args) {
   copy_bitmap(DOGE_ROM);
-  idle_fn = draw_bitmap;
+  update_bitmap();
 }
 
 extern const uint8_t PEPE_ROM[] PROGMEM;
@@ -104,7 +104,7 @@ extern const uint8_t PEPE_ROM[] PROGMEM;
 // Start drawing Pepe bitmap in idle loop
 void init_pepe(Args) {
   copy_bitmap(PEPE_ROM);
-  idle_fn = draw_bitmap;
+  update_bitmap();
 }
 
 // 64x64 1-bit Doge bitmap

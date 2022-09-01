@@ -16,9 +16,7 @@ extern IdleFn idle_fn;
 extern StreamEx serialEx;
 extern CLI serialCLI;
 
-// TODO move text functions to bitmap.cpp?
-extern uint8_t BITMAP_RAM[];
-void draw_bitmap();
+void update_bitmap();
 
 void init_sines(Args);
 

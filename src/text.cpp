@@ -11,8 +11,10 @@ constexpr uint8_t ROWS_PER_CHAR = 8;
 constexpr char FIRST_CHAR = '!';
 constexpr char LAST_CHAR = 'z';
 
+extern uint8_t BACK_BUFFER[];
+
 void draw_string(uint8_t row, const char* str) {
-  uint8_t* col_ptr = BITMAP_RAM + row * ROWS_PER_CHAR * SCREEN_COLS;
+  uint8_t* col_ptr = BACK_BUFFER + row * ROWS_PER_CHAR * SCREEN_COLS;
 
   // Clear line
   memset(col_ptr, 0, SCREEN_COLS * ROWS_PER_CHAR);
@@ -39,13 +41,14 @@ void draw_string(uint8_t row, const char* str) {
 }
 
 void clear_bitmap() {
-  memset(BITMAP_RAM, 0, SCREEN_COLS * SCREEN_ROWS * ROWS_PER_CHAR);
+  memset(BACK_BUFFER, 0, SCREEN_COLS * SCREEN_ROWS * ROWS_PER_CHAR);
+  update_bitmap();
 }
 
 // Clear each row of screen buffer
 void clear_screen(Args) {
   clear_bitmap();
-  idle_fn = draw_bitmap;
+  update_bitmap();
 }
 
 // Copy logo to screen buffer
@@ -55,7 +58,7 @@ void init_logo(Args) {
   draw_string(3, "Trevor  ");
   draw_string(4, "  Makes!");
   draw_string(5, "````````");
-  idle_fn = draw_bitmap;
+  update_bitmap();
 }
 
 // Scroll screen buffer and print message to bottom row
@@ -63,13 +66,13 @@ void print_message(Args args) {
   const char* message = args.next();
 
   // Scroll rows up from the bottom
-  memmove(BITMAP_RAM, BITMAP_RAM + SCREEN_COLS * ROWS_PER_CHAR, (SCREEN_ROWS - 1) * SCREEN_COLS * ROWS_PER_CHAR);
+  memmove(BACK_BUFFER, BACK_BUFFER + SCREEN_COLS * ROWS_PER_CHAR, (SCREEN_ROWS - 1) * SCREEN_COLS * ROWS_PER_CHAR);
 
   // Copy message into now vacant line at bottom
   draw_string(SCREEN_ROWS - 1, message);
 
   // Set idle function to draw screen buffer
-  idle_fn = draw_bitmap;
+  update_bitmap();
 }
 
 // Commodore 64 font extracted from VICE
