@@ -3,6 +3,7 @@
 #include "main.hpp"
 
 #include "core/mon.hpp"
+#include "core/util.hpp"
 
 constexpr uint8_t BITMAP_ROWS = 64;
 constexpr uint8_t BITMAP_COL_BYTES = 8;
@@ -35,18 +36,13 @@ void flip_vertical_impl() {
   }
 }
 
-uint8_t reverse_bits(uint8_t b) {
-  // http://graphics.stanford.edu/~seander/bithacks.html#ReverseByteWith32Bits
-  return ((b * 0x0802LU & 0x22110LU) | (b * 0x8020LU & 0x88440LU)) * 0x10101LU >> 16; 
-}
-
 void flip_horizontal_impl() {
   for (uint16_t offset = 0; offset < BITMAP_BYTES; offset += BITMAP_COL_BYTES) {
     for (uint8_t col = 0; col < BITMAP_COL_BYTES / 2; ++col) {
       uint16_t offset1 = offset + col;
       uint16_t offset2 = offset + BITMAP_COL_BYTES - col - 1;
-      uint8_t swap = reverse_bits(FRONT_BUFFER[offset1]);
-      FRONT_BUFFER[offset1] = reverse_bits(FRONT_BUFFER[offset2]);
+      uint8_t swap = util::reverse_bits(FRONT_BUFFER[offset1]);
+      FRONT_BUFFER[offset1] = util::reverse_bits(FRONT_BUFFER[offset2]);
       FRONT_BUFFER[offset2] = swap;
     }
   }
