@@ -24,6 +24,8 @@ void clear_screen(Args);
 void init_logo(Args);
 void print_message(Args);
 
+void draw_star(Args);
+
 void init_doge(Args);
 void init_pepe(Args);
 void flip_vertical(Args);
