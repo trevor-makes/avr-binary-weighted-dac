@@ -13,10 +13,17 @@ uint8_t SINE_TABLE[MAX_STEPS];
 
 // Output sine and cosine to X and Y channels
 void draw_sines() {
-  for (uint8_t i = 0; i < steps; ++i) {
+  // The midpoint circle algorithm is surprisingly giving better results in less time
+  uint8_t i1 = 0, i2 = steps / 4;
+  for (; i2 < steps; ++i1, ++i2) {
     // Shift phase of X by 90° (steps/4) for cosine
-    write_x(SINE_TABLE[(i + (steps / 4)) % steps]);
-    write_y(SINE_TABLE[i]);
+    write_x(SINE_TABLE[i2]);
+    write_y(SINE_TABLE[i1]);
+  }
+  i2 = 0;
+  for (; i1 < steps; ++i1, ++i2) {
+    write_x(SINE_TABLE[i2]);
+    write_y(SINE_TABLE[i1]);
   }
 }
 
