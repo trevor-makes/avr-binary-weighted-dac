@@ -35,4 +35,3 @@ void load_bitmap(Args);
 void init_ports();
 void write_x(uint8_t x);
 void write_y(uint8_t y);
-void write_bits(uint8_t x, uint8_t y, uint8_t bits);

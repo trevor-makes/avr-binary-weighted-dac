@@ -11,39 +11,53 @@ constexpr uint8_t BITS_PER_BYTE = 8;
 constexpr uint8_t BITMAP_COL_BITS = BITMAP_COL_BYTES * BITS_PER_BYTE;
 constexpr size_t BITMAP_BYTES = BITMAP_ROWS * BITMAP_COL_BYTES;
 
-uint8_t BACK_BUFFER[BITMAP_BYTES];
-uint8_t FRONT_BUFFER[BITMAP_BYTES];
+uint8_t BITMAP_RAM[BITMAP_BYTES];
+
+template <bool FLIP_H>
+void write_bits(uint8_t x, uint8_t y, uint8_t bits) {
+  // Skip blank scanlines
+  if (bits == 0) return;
+
+  // Write Y only if we find a non-blank scanline
+  write_y(y);
+
+  // Write X for each set bit
+  do {
+    if (FLIP_H) --x; // Pre-decrement if reversed
+    if (bits & 0x80) write_x(x); // Draw if MSB set
+    if (!FLIP_H) ++x; // Post-decrement if forwards
+  } while ((bits <<= 1) > 0); // Shift next bit into MSB
+}
 
 // Trace set bitmap pixels with X and Y
+template <bool FLIP_H, bool FLIP_V>
 void draw_bitmap() {
-  const uint8_t* bitmap_ptr = FRONT_BUFFER;
-  for (uint8_t row = 0; row < BITMAP_ROWS; ++row) {
-    for (uint8_t col = 0; col < BITMAP_COL_BITS; col += BITS_PER_BYTE) {
-      write_bits(col, row, *bitmap_ptr++);
+  const uint8_t* bitmap_ptr = BITMAP_RAM;
+  // For row in [0, BITMAP_ROWS), reversed if FLIP_V set
+  for (uint8_t row = FLIP_V ? BITMAP_ROWS : 0; ; ) {
+    // Pre-decrement row if reversed
+    if (FLIP_V) {
+      if (row == 0) break;
+      --row;
     }
-  }
-}
-
-void flip_vertical_impl() {
-  for (uint8_t row = 0; row < BITMAP_ROWS / 2; ++row) {
-    uint16_t offset1 = row * BITMAP_COL_BYTES;
-    uint16_t offset2 = (BITMAP_ROWS - row - 1) * BITMAP_COL_BYTES;
-    for (uint8_t col = 0; col < BITMAP_COL_BYTES; ++col) {
-      uint8_t swap = FRONT_BUFFER[offset1 + col];
-      FRONT_BUFFER[offset1 + col] = FRONT_BUFFER[offset2 + col];
-      FRONT_BUFFER[offset2 + col] = swap;
+    // For col in [0, BITMAP_ROWS), reversed if FLIP_H set
+    for (uint8_t col = FLIP_H ? BITMAP_COL_BITS : 0; ; ) {
+      // Pre-decrement col if reversed
+      if (FLIP_H) {
+        if (col == 0) break;
+        col -= BITS_PER_BYTE;
+      }
+      write_bits<FLIP_H>(col, row, *bitmap_ptr++);
+      // Post-decrement col if forwards
+      if (!FLIP_H) {
+        col += BITS_PER_BYTE;
+        if (col == BITMAP_COL_BITS) break;
+      }
     }
-  }
-}
-
-void flip_horizontal_impl() {
-  for (uint16_t offset = 0; offset < BITMAP_BYTES; offset += BITMAP_COL_BYTES) {
-    for (uint8_t col = 0; col < BITMAP_COL_BYTES / 2; ++col) {
-      uint16_t offset1 = offset + col;
-      uint16_t offset2 = offset + BITMAP_COL_BYTES - col - 1;
-      uint8_t swap = util::reverse_bits(FRONT_BUFFER[offset1]);
-      FRONT_BUFFER[offset1] = util::reverse_bits(FRONT_BUFFER[offset2]);
-      FRONT_BUFFER[offset2] = swap;
+    // Post-decrement row if forwards
+    if (!FLIP_V) {
+      ++row;
+      if (row == BITMAP_ROWS) break;
     }
   }
 }
@@ -52,10 +66,19 @@ bool is_flip_v = false;
 bool is_flip_h = false;
 
 void update_bitmap() {
-  memcpy(FRONT_BUFFER, BACK_BUFFER, BITMAP_BYTES);
-  if (is_flip_h) flip_horizontal_impl();
-  if (is_flip_v) flip_vertical_impl();
-  idle_fn = draw_bitmap;
+  if (is_flip_h) {
+    if (is_flip_v) {
+      idle_fn = draw_bitmap<true, true>;
+    } else {
+      idle_fn = draw_bitmap<true, false>;
+    }
+  } else {
+    if (is_flip_v) {
+      idle_fn = draw_bitmap<false, true>;
+    } else {
+      idle_fn = draw_bitmap<false, false>;
+    }
+  }
 }
 
 void flip_vertical(Args) {
@@ -69,14 +92,14 @@ void flip_horizontal(Args) {
 }
 
 void copy_bitmap(const uint8_t* source) {
-  memcpy_P(BACK_BUFFER, source, BITMAP_BYTES);
+  memcpy_P(BITMAP_RAM, source, BITMAP_BYTES);
   update_bitmap();
 }
 
 struct API : public core::mon::Base<API> {
   static StreamEx& get_stream() { return serialEx; }
-  static uint8_t read_byte(uint16_t addr) { return BACK_BUFFER[addr]; }
-  static void write_byte(uint16_t addr, uint8_t data) { BACK_BUFFER[addr % BITMAP_BYTES] = data; }
+  static uint8_t read_byte(uint16_t addr) { return BITMAP_RAM[addr]; }
+  static void write_byte(uint16_t addr, uint8_t data) { BITMAP_RAM[addr % BITMAP_BYTES] = data; }
 };
 
 void save_bitmap(Args) {

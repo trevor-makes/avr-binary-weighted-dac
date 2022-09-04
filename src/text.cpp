@@ -11,10 +11,10 @@ constexpr uint8_t ROWS_PER_CHAR = 8;
 constexpr char FIRST_CHAR = '!';
 constexpr char LAST_CHAR = 'z';
 
-extern uint8_t BACK_BUFFER[];
+extern uint8_t BITMAP_RAM[];
 
 void draw_string(uint8_t row, const char* str) {
-  uint8_t* col_ptr = BACK_BUFFER + row * ROWS_PER_CHAR * SCREEN_COLS;
+  uint8_t* col_ptr = BITMAP_RAM + row * ROWS_PER_CHAR * SCREEN_COLS;
 
   // Clear line
   memset(col_ptr, 0, SCREEN_COLS * ROWS_PER_CHAR);
@@ -41,7 +41,7 @@ void draw_string(uint8_t row, const char* str) {
 }
 
 void clear_bitmap() {
-  memset(BACK_BUFFER, 0, SCREEN_COLS * SCREEN_ROWS * ROWS_PER_CHAR);
+  memset(BITMAP_RAM, 0, SCREEN_COLS * SCREEN_ROWS * ROWS_PER_CHAR);
   update_bitmap();
 }
 
@@ -66,7 +66,7 @@ void print_message(Args args) {
   const char* message = args.next();
 
   // Scroll rows up from the bottom
-  memmove(BACK_BUFFER, BACK_BUFFER + SCREEN_COLS * ROWS_PER_CHAR, (SCREEN_ROWS - 1) * SCREEN_COLS * ROWS_PER_CHAR);
+  memmove(BITMAP_RAM, BITMAP_RAM + SCREEN_COLS * ROWS_PER_CHAR, (SCREEN_ROWS - 1) * SCREEN_COLS * ROWS_PER_CHAR);
 
   // Copy message into now vacant line at bottom
   draw_string(SCREEN_ROWS - 1, message);

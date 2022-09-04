@@ -38,21 +38,3 @@ void write_x(uint8_t x) {
 void write_y(uint8_t y) {
   YAxis::write(y);
 }
-
-void write_bits(uint8_t x, uint8_t y, uint8_t bits) {
-  // Skip blank scanlines
-  if (bits == 0)
-    return;
-
-  // Write Y only if we find a non-blank scanline
-  write_y(y);
-
-  // Write X for each set bit
-  do {
-    if (bits >= 0x80) { // if high bit is set...
-      write_x(x);
-    }
-    bits <<= 1;
-    ++x;
-  } while (bits > 0);
-}
