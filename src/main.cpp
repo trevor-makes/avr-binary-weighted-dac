@@ -24,7 +24,7 @@ void loop() {
     { "clear", clear_screen },
     { "print", print_message },
     { "sines", init_sines },
-    { "star", draw_star },
+    { "star", init_star },
     { "doge", init_doge },
     { "pepe", init_pepe },
     { "fliph", flip_horizontal },

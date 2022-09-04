@@ -18,13 +18,12 @@ extern CLI serialCLI;
 
 void update_bitmap();
 
+void init_star(Args);
 void init_sines(Args);
 
 void clear_screen(Args);
 void init_logo(Args);
 void print_message(Args);
-
-void draw_star(Args);
 
 void init_doge(Args);
 void init_pepe(Args);

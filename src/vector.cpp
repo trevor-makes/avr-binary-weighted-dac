@@ -88,7 +88,7 @@ void draw_circle(int8_t xm, int8_t ym, int8_t r) {
   draw_quadrant<3>(xm, ym, r);
 }
 
-void draw_star_idle() {
+void draw_star() {
   // TODO using 63 for y endpoint glitches display
   draw_line(14, 8, 32, 62);
   draw_line(32, 62, 50, 8);
@@ -98,6 +98,14 @@ void draw_star_idle() {
   draw_circle(32, 32, 31);
 }
 
-void draw_star(Args) {
-  idle_fn = draw_star_idle;
+void init_star(Args) {
+  idle_fn = draw_star;
+}
+
+void draw_sines() {
+  draw_circle(32, 32, 31);
+}
+
+void init_sines(Args args) {
+  idle_fn = draw_sines;
 }
