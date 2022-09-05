@@ -25,9 +25,9 @@ void loop() {
     { "clear", clear_screen },
     { "print", print_message },
     // vector.cpp
-    { "sines", init_sines },
+    { "circle", init_circle },
+    { "cross", init_cross },
     { "bounce", init_bounce },
-    { "star", init_star },
     // bitmap.cpp
     { "doge", init_doge },
     { "pepe", init_pepe },

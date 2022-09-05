@@ -88,29 +88,26 @@ void draw_circle(int8_t xm, int8_t ym, int8_t r) {
   draw_quadrant<3>(xm, ym, r);
 }
 
-void draw_star() {
-  // TODO using 63 for y endpoint glitches display
-  draw_line(14, 8, 32, 62);
-  draw_line(32, 62, 50, 8);
-  draw_line(50, 8, 3, 42);
-  draw_line(3, 42, 60, 42);
-  draw_line(60, 42, 14, 8);
+void idle_circle() {
+  // Cosine in X, sine in Y
   draw_circle(32, 32, 31);
 }
 
-void init_star(Args) {
-  idle_fn = draw_star;
+void init_circle(Args) {
+  idle_fn = idle_circle;
 }
 
-void draw_sines() {
-  draw_circle(32, 32, 31);
+void idle_cross() {
+  // Triangle wave in X, sawtooth wave in Y
+  draw_line(0, 0, 63, 63);
+  draw_line(63, 0, 0, 63);
 }
 
-void init_sines(Args args) {
-  idle_fn = draw_sines;
+void init_cross(Args) {
+  idle_fn = idle_cross;
 }
 
-void draw_bounce() {
+void idle_bounce() {
   // Ball radius and top/bottom inset
   constexpr uint8_t RADIUS = 4;
   constexpr uint8_t INSET = 4;
@@ -138,5 +135,5 @@ void draw_bounce() {
 }
 
 void init_bounce(Args) {
-  idle_fn = draw_bounce;
+  idle_fn = idle_bounce;
 }

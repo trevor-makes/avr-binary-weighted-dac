@@ -18,8 +18,8 @@ extern CLI serialCLI;
 
 void update_bitmap();
 
-void init_star(Args);
-void init_sines(Args);
+void init_circle(Args);
+void init_cross(Args);
 void init_bounce(Args);
 
 void clear_screen(Args);
