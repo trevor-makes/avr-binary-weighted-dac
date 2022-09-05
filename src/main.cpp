@@ -20,11 +20,15 @@ void setup() {
 
 void loop() {
   static const Command commands[] = {
+    // text.cpp
     { "logo", init_logo },
     { "clear", clear_screen },
     { "print", print_message },
+    // vector.cpp
     { "sines", init_sines },
+    { "bounce", init_bounce },
     { "star", init_star },
+    // bitmap.cpp
     { "doge", init_doge },
     { "pepe", init_pepe },
     { "fliph", flip_horizontal },

@@ -109,3 +109,34 @@ void draw_sines() {
 void init_sines(Args args) {
   idle_fn = draw_sines;
 }
+
+void draw_bounce() {
+  // Ball radius and top/bottom inset
+  constexpr uint8_t RADIUS = 4;
+  constexpr uint8_t INSET = 4;
+  // 8.8 bit position and .8 bit velocity
+  static uint16_t x = RADIUS * 256;
+  static uint16_t y = (RADIUS + INSET) * 256;
+  static int8_t dx = 5;
+  static int8_t dy = 3;
+  // Draw borders and ball
+  draw_line(0, INSET, 63, INSET);
+  draw_line(63, INSET, 63, 63 - INSET);
+  draw_line(63, 63 - INSET, 0, 63 - INSET);
+  draw_line(0, 63 - INSET, 0, INSET);
+  draw_circle(x >> 8, y >> 8, RADIUS);
+  // Bounce ball off borders
+  if (x + dx < RADIUS * 256 || x + dx > (63 - RADIUS) * 256) {
+    dx = -dx;
+  }
+  if (y + dy < (RADIUS + INSET) * 256 || y + dy > (63 - INSET - RADIUS) * 256) {
+    dy = -dy;
+  }
+  // Update ball position
+  x += dx;
+  y += dy;
+}
+
+void init_bounce(Args) {
+  idle_fn = draw_bounce;
+}

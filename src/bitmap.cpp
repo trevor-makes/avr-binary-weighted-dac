@@ -3,7 +3,6 @@
 #include "main.hpp"
 
 #include "core/mon.hpp"
-#include "core/util.hpp"
 
 constexpr uint8_t BITMAP_ROWS = 64;
 constexpr uint8_t BITMAP_COL_BYTES = 8;

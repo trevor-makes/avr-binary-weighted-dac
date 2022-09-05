@@ -20,6 +20,7 @@ void update_bitmap();
 
 void init_star(Args);
 void init_sines(Args);
+void init_bounce(Args);
 
 void clear_screen(Args);
 void init_logo(Args);
