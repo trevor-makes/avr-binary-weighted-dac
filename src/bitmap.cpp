@@ -12,6 +12,7 @@ constexpr size_t BITMAP_BYTES = BITMAP_ROWS * BITMAP_COL_BYTES;
 
 uint8_t BITMAP_RAM[BITMAP_BYTES];
 
+// TODO maybe take col as ref so inc/dec isn't repeated
 template <bool FLIP_H>
 void write_bits(uint8_t x, uint8_t y, uint8_t bits) {
   // Skip blank scanlines
@@ -41,19 +42,17 @@ void draw_bitmap() {
     }
     // For col in [0, BITMAP_ROWS), reversed if FLIP_H set
     for (uint8_t col = FLIP_H ? BITMAP_COL_BITS : 0; ; ) {
-      // Pre-decrement col if reversed
-      if (FLIP_H) {
-        if (col == 0) break;
-        col -= BITS_PER_BYTE;
-      }
       write_bits<FLIP_H>(col, row, *bitmap_ptr++);
-      // Post-decrement col if forwards
-      if (!FLIP_H) {
+      // Post-increment/decrement col
+      if (FLIP_H) {
+        col -= BITS_PER_BYTE;
+        if (col == 0) break;
+      } else {
         col += BITS_PER_BYTE;
         if (col == BITMAP_COL_BITS) break;
       }
     }
-    // Post-decrement row if forwards
+    // Post-increment row if forwards
     if (!FLIP_V) {
       ++row;
       if (row == BITMAP_ROWS) break;
