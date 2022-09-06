@@ -12,9 +12,8 @@ constexpr size_t BITMAP_BYTES = BITMAP_ROWS * BITMAP_COL_BYTES;
 
 uint8_t BITMAP_RAM[BITMAP_BYTES];
 
-// TODO maybe take col as ref so inc/dec isn't repeated
 template <bool FLIP_H>
-void write_bits(uint8_t x, uint8_t y, uint8_t bits) {
+void write_bits(uint8_t x, const uint8_t y, uint8_t bits) {
   // Skip blank scanlines
   if (bits == 0) return;
 
