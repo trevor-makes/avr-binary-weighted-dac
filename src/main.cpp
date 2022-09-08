@@ -24,6 +24,7 @@ void loop() {
     { "logo", init_logo },
     { "clear", clear_screen },
     { "print", print_message },
+    { "maze", init_maze },
     // vector.cpp
     { "circle", init_circle },
     { "cross", init_cross },

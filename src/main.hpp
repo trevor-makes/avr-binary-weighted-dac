@@ -16,7 +16,7 @@ extern IdleFn idle_fn;
 extern StreamEx serialEx;
 extern CLI serialCLI;
 
-void update_bitmap();
+void bitmap_idle();
 
 void init_circle(Args);
 void init_cross(Args);
@@ -25,6 +25,7 @@ void init_bounce(Args);
 void clear_screen(Args);
 void init_logo(Args);
 void print_message(Args);
+void init_maze(Args);
 
 void init_doge(Args);
 void init_pepe(Args);

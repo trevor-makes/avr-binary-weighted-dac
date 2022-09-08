@@ -2,22 +2,26 @@
 
 #include "main.hpp"
 
+#include "core/util.hpp"
+
 extern const uint8_t CHAR_ROM[] PROGMEM;
 
 constexpr uint8_t SCREEN_COLS = 8;
 constexpr uint8_t SCREEN_ROWS = 8;
 constexpr uint8_t COLS_PER_CHAR = 8;
 constexpr uint8_t ROWS_PER_CHAR = 8;
+constexpr uint8_t BITMAP_ROWS = SCREEN_ROWS * ROWS_PER_CHAR;
 constexpr char FIRST_CHAR = '!';
 constexpr char LAST_CHAR = '~';
 
 extern uint8_t BITMAP_RAM[];
 
 void draw_string(uint8_t row, const char* str) {
-  uint8_t* col_ptr = BITMAP_RAM + row * ROWS_PER_CHAR * SCREEN_COLS;
+  uint8_t* col_ptr = BITMAP_RAM + row * SCREEN_COLS;
+  uint8_t rows = util::min(ROWS_PER_CHAR, uint8_t(BITMAP_ROWS - util::min(BITMAP_ROWS, row)));
 
   // Clear line
-  memset(col_ptr, 0, SCREEN_COLS * ROWS_PER_CHAR);
+  memset(col_ptr, 0, SCREEN_COLS * rows);
 
   for (uint8_t col = 0; col < SCREEN_COLS; ++col) {
     // Read ASCII code for current character
@@ -34,31 +38,30 @@ void draw_string(uint8_t row, const char* str) {
     // Trace each character fully before advancing to next character
     uint16_t char_index = (c - FIRST_CHAR) * ROWS_PER_CHAR;
     const uint8_t* char_ptr = &CHAR_ROM[char_index];
-    for (uint8_t offset = col; offset < SCREEN_COLS * ROWS_PER_CHAR; offset += SCREEN_COLS) {
+    for (uint8_t offset = col; offset < SCREEN_COLS * rows; offset += SCREEN_COLS) {
       col_ptr[offset] = pgm_read_byte(char_ptr++);
     }
   }
 }
 
 void clear_bitmap() {
-  memset(BITMAP_RAM, 0, SCREEN_COLS * SCREEN_ROWS * ROWS_PER_CHAR);
-  update_bitmap();
+  memset(BITMAP_RAM, 0, SCREEN_COLS * BITMAP_ROWS);
 }
 
 // Clear each row of screen buffer
 void clear_screen(Args) {
   clear_bitmap();
-  update_bitmap();
+  idle_fn = bitmap_idle;
 }
 
 // Copy logo to screen buffer
 void init_logo(Args) {
   clear_bitmap();
-  draw_string(2, "````````");
-  draw_string(3, "Trevor  ");
-  draw_string(4, "  Makes!");
-  draw_string(5, "````````");
-  update_bitmap();
+  draw_string(2 * ROWS_PER_CHAR, "````````");
+  draw_string(3 * ROWS_PER_CHAR, "Trevor  ");
+  draw_string(4 * ROWS_PER_CHAR, "  Makes!");
+  draw_string(5 * ROWS_PER_CHAR, "````````");
+  idle_fn = bitmap_idle;
 }
 
 // Scroll screen buffer and print message to bottom row
@@ -69,10 +72,38 @@ void print_message(Args args) {
   memmove(BITMAP_RAM, BITMAP_RAM + SCREEN_COLS * ROWS_PER_CHAR, (SCREEN_ROWS - 1) * SCREEN_COLS * ROWS_PER_CHAR);
 
   // Copy message into now vacant line at bottom
-  draw_string(SCREEN_ROWS - 1, message);
+  draw_string((SCREEN_ROWS - 1) * ROWS_PER_CHAR, message);
 
   // Set idle function to draw screen buffer
-  update_bitmap();
+  idle_fn = bitmap_idle;
+}
+
+static uint8_t idle_count = 0;
+static uint8_t scroll_count = 0;
+
+void idle_maze() {
+  // Limit scrolling to 1/16 framerate
+  if ((idle_count++ & 0x0F) == 0) {
+    static char maze_chars[SCREEN_COLS];
+    // Refresh random chars when scrolling a new row
+    if (scroll_count++ == 0) {
+      for (uint8_t i = 0; i < SCREEN_COLS; ++i) {
+        maze_chars[i]  = random(2) ? '/' : '\\';
+      }
+    }
+    // Scroll line up by one pixel
+    memmove(BITMAP_RAM, BITMAP_RAM + SCREEN_COLS, (BITMAP_ROWS - 1) * SCREEN_COLS);
+    draw_string(BITMAP_ROWS - scroll_count, maze_chars);
+    if (scroll_count == ROWS_PER_CHAR) scroll_count = 0;
+  }
+  // Delegate to bitmap idle function
+  bitmap_idle();
+}
+
+void init_maze(Args) {
+  idle_count = 0;
+  scroll_count = 0;
+  idle_fn = idle_maze;
 }
 
 // Commodore 64 font extracted from VICE

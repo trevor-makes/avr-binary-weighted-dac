@@ -59,38 +59,44 @@ void draw_bitmap() {
   }
 }
 
-bool is_flip_v = false;
-bool is_flip_h = false;
+IdleFn bitmap_idle_ptr = draw_bitmap<false, false>;
 
-void update_bitmap() {
-  if (is_flip_h) {
-    if (is_flip_v) {
-      idle_fn = draw_bitmap<true, true>;
+void bitmap_idle() {
+  bitmap_idle_ptr();
+}
+
+void flip_bitmap(bool flip_h, bool flip_v) {
+  if (flip_h) {
+    if (flip_v) {
+      bitmap_idle_ptr = draw_bitmap<true, true>;
     } else {
-      idle_fn = draw_bitmap<true, false>;
+      bitmap_idle_ptr = draw_bitmap<true, false>;
     }
   } else {
-    if (is_flip_v) {
-      idle_fn = draw_bitmap<false, true>;
+    if (flip_v) {
+      bitmap_idle_ptr = draw_bitmap<false, true>;
     } else {
-      idle_fn = draw_bitmap<false, false>;
+      bitmap_idle_ptr = draw_bitmap<false, false>;
     }
   }
 }
 
+bool g_flip_v = false;
+bool g_flip_h = false;
+
 void flip_vertical(Args) {
-  is_flip_v = !is_flip_v;
-  update_bitmap();
+  g_flip_v = !g_flip_v;
+  flip_bitmap(g_flip_h, g_flip_v);
 }
 
 void flip_horizontal(Args) {
-  is_flip_h = !is_flip_h;
-  update_bitmap();
+  g_flip_h = !g_flip_h;
+  flip_bitmap(g_flip_h, g_flip_v);
 }
 
 void copy_bitmap(const uint8_t* source) {
   memcpy_P(BITMAP_RAM, source, BITMAP_BYTES);
-  update_bitmap();
+  idle_fn = bitmap_idle;
 }
 
 struct API : public core::mon::Base<API> {
@@ -112,7 +118,6 @@ extern const uint8_t DOGE_ROM[] PROGMEM;
 // Start drawing Doge bitmap in idle loop
 void init_doge(Args) {
   copy_bitmap(DOGE_ROM);
-  update_bitmap();
 }
 
 extern const uint8_t PEPE_ROM[] PROGMEM;
@@ -120,7 +125,6 @@ extern const uint8_t PEPE_ROM[] PROGMEM;
 // Start drawing Pepe bitmap in idle loop
 void init_pepe(Args) {
   copy_bitmap(PEPE_ROM);
-  update_bitmap();
 }
 
 // 64x64 1-bit Doge bitmap
