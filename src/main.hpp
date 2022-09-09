@@ -17,6 +17,7 @@ extern StreamEx serialEx;
 extern CLI serialCLI;
 
 void bitmap_idle();
+void set_delay(Args);
 
 void init_circle(Args);
 void init_cross(Args);

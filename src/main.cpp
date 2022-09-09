@@ -36,6 +36,7 @@ void loop() {
     { "flipv", flip_vertical },
     { "save", save_bitmap },
     { "load", load_bitmap },
+    { "delay", set_delay },
   };
 
   // Prompt for a command from the list while looping over the idle function

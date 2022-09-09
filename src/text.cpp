@@ -82,8 +82,8 @@ static uint8_t idle_count = 0;
 static uint8_t scroll_count = 0;
 
 void idle_maze() {
-  // Limit scrolling to 1/16 framerate
-  if ((idle_count++ & 0x0F) == 0) {
+  // Limit scrolling to 1/8 framerate
+  if ((idle_count++ & 0x07) == 0) {
     static char maze_chars[SCREEN_COLS];
     // Refresh random chars when scrolling a new row
     if (scroll_count++ == 0) {

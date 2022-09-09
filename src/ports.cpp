@@ -20,8 +20,10 @@
   //  8RΩ - B2 |   ___   | x
   //  4RΩ - B3 |  |USB|  | x
   //  2RΩ - B4 |__|___|__| B5 - RΩ
-  using XAxis = PortB::Mask<0x3F>;
-  using YAxis = PortC::Mask<0x3F>;
+  // NOTE there is no harm in writing the unused upper bits of each port,
+  // and removing the mask significantly speeds up vector drawing
+  using XAxis = PortB;//::Mask<0x3F>;
+  using YAxis = PortC;//::Mask<0x3F>;
 #else
   #error The I/O port mapping has not been defined for the target platform
 #endif

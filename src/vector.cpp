@@ -75,8 +75,8 @@ void draw_quadrant(int8_t xm, int8_t ym, int8_t r) {
     }
     if (r > x || err > y) {
       ++x;
-      err += x*2 + 1;
       write_quad_x<Q>(xm, ym, x);
+      err += x*2 + 1;
     }
   }
 }
@@ -116,12 +116,12 @@ void idle_bounce() {
   static uint16_t y = (RADIUS + INSET) * 256;
   static int8_t dx = 5;
   static int8_t dy = 3;
-  // Draw borders and ball
+  // Draw ball and borders
+  draw_circle(x >> 8, y >> 8, RADIUS);
   draw_line(0, INSET, 63, INSET);
   draw_line(63, INSET, 63, 63 - INSET);
   draw_line(63, 63 - INSET, 0, 63 - INSET);
   draw_line(0, 63 - INSET, 0, INSET);
-  draw_circle(x >> 8, y >> 8, RADIUS);
   // Bounce ball off borders
   if (x + dx < RADIUS * 256 || x + dx > (63 - RADIUS) * 256) {
     dx = -dx;

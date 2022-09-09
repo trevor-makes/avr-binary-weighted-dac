@@ -12,6 +12,12 @@ constexpr size_t BITMAP_BYTES = BITMAP_ROWS * BITMAP_COL_BYTES;
 
 uint8_t BITMAP_RAM[BITMAP_BYTES];
 
+uint8_t g_pixel_hold = 3;
+
+void set_delay(Args args) {
+  g_pixel_hold = atoi(args.next());
+}
+
 template <bool FLIP_H>
 void write_bits(uint8_t x, const uint8_t y, uint8_t bits) {
   // Skip blank scanlines
@@ -23,7 +29,10 @@ void write_bits(uint8_t x, const uint8_t y, uint8_t bits) {
   // Write X for each set bit
   do {
     if (FLIP_H) --x; // Pre-decrement if reversed
-    if (bits & 0x80) write_x(x); // Draw if MSB set
+    if (bits & 0x80) {
+      write_x(x); // Draw if MSB set
+      delayMicroseconds(g_pixel_hold);
+    }
     if (!FLIP_H) ++x; // Post-decrement if forwards
   } while ((bits <<= 1) > 0); // Shift next bit into MSB
 }
@@ -59,24 +68,24 @@ void draw_bitmap() {
   }
 }
 
-IdleFn bitmap_idle_ptr = draw_bitmap<false, false>;
+IdleFn g_bitmap_idle_ptr = draw_bitmap<false, false>;
 
 void bitmap_idle() {
-  bitmap_idle_ptr();
+  g_bitmap_idle_ptr();
 }
 
 void flip_bitmap(bool flip_h, bool flip_v) {
   if (flip_h) {
     if (flip_v) {
-      bitmap_idle_ptr = draw_bitmap<true, true>;
+      g_bitmap_idle_ptr = draw_bitmap<true, true>;
     } else {
-      bitmap_idle_ptr = draw_bitmap<true, false>;
+      g_bitmap_idle_ptr = draw_bitmap<true, false>;
     }
   } else {
     if (flip_v) {
-      bitmap_idle_ptr = draw_bitmap<false, true>;
+      g_bitmap_idle_ptr = draw_bitmap<false, true>;
     } else {
-      bitmap_idle_ptr = draw_bitmap<false, false>;
+      g_bitmap_idle_ptr = draw_bitmap<false, false>;
     }
   }
 }
