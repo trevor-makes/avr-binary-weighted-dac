@@ -12,7 +12,7 @@ constexpr size_t BITMAP_BYTES = BITMAP_ROWS * BITMAP_COL_BYTES;
 
 uint8_t BITMAP_RAM[BITMAP_BYTES];
 
-uint8_t g_pixel_hold = 3;
+static uint8_t g_pixel_hold = 3;
 
 void set_delay(Args args) {
   g_pixel_hold = atoi(args.next());
@@ -105,20 +105,20 @@ void flip_horizontal(Args) {
 
 void copy_bitmap(const uint8_t* source) {
   memcpy_P(BITMAP_RAM, source, BITMAP_BYTES);
-  idle_fn = bitmap_idle;
+  g_idle_fn = bitmap_idle;
 }
 
 struct API : public core::mon::Base<API> {
-  static StreamEx& get_stream() { return serialEx; }
+  static StreamEx& get_stream() { return g_serial_ex; }
   static uint8_t read_byte(uint16_t addr) { return BITMAP_RAM[addr]; }
   static void write_byte(uint16_t addr, uint8_t data) { BITMAP_RAM[addr % BITMAP_BYTES] = data; }
 };
 
-void save_bitmap(Args) {
+void export_bitmap(Args) {
   core::mon::impl_save<API>(0, BITMAP_BYTES);
 }
 
-void load_bitmap(Args args) {
+void import_bitmap(Args args) {
   core::mon::cmd_load<API>(args);
 }
 

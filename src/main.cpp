@@ -2,9 +2,9 @@
 
 #include "main.hpp"
 
-IdleFn idle_fn = nullptr; // Function to call while waiting for serial input
-StreamEx serialEx(Serial); // Stream wrapper that supports ANSI escape codes
-CLI serialCLI(serialEx); // Limit CLI to 20 byte line length
+IdleFn g_idle_fn = nullptr; // Function to call while waiting for serial input
+StreamEx g_serial_ex(Serial); // Stream wrapper that supports ANSI escape codes
+CLI g_serial_cli(g_serial_ex); // Command line interface manager
 
 void setup() {
   // Configure I/O ports for output
@@ -34,11 +34,11 @@ void loop() {
     { "pepe", init_pepe },
     { "fliph", flip_horizontal },
     { "flipv", flip_vertical },
-    { "save", save_bitmap },
-    { "load", load_bitmap },
+    { "export", export_bitmap },
+    { "import", import_bitmap },
     { "delay", set_delay },
   };
 
   // Prompt for a command from the list while looping over the idle function
-  serialCLI.run_once(commands, idle_fn);
+  g_serial_cli.run_once(commands, g_idle_fn);
 }

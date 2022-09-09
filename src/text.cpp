@@ -51,7 +51,7 @@ void clear_bitmap() {
 // Clear each row of screen buffer
 void clear_screen(Args) {
   clear_bitmap();
-  idle_fn = bitmap_idle;
+  g_idle_fn = bitmap_idle;
 }
 
 // Copy logo to screen buffer
@@ -61,7 +61,7 @@ void init_logo(Args) {
   draw_string(3 * ROWS_PER_CHAR, "Trevor  ");
   draw_string(4 * ROWS_PER_CHAR, "  Makes!");
   draw_string(5 * ROWS_PER_CHAR, "````````");
-  idle_fn = bitmap_idle;
+  g_idle_fn = bitmap_idle;
 }
 
 // Scroll screen buffer and print message to bottom row
@@ -75,35 +75,35 @@ void print_message(Args args) {
   draw_string((SCREEN_ROWS - 1) * ROWS_PER_CHAR, message);
 
   // Set idle function to draw screen buffer
-  idle_fn = bitmap_idle;
+  g_idle_fn = bitmap_idle;
 }
 
-static uint8_t idle_count = 0;
-static uint8_t scroll_count = 0;
+static uint8_t g_idle_count = 0;
+static uint8_t g_scroll_count = 0;
 
-void idle_maze() {
+void maze_idle() {
   // Limit scrolling to 1/8 framerate
-  if ((idle_count++ & 0x07) == 0) {
+  if ((g_idle_count++ & 0x07) == 0) {
     static char maze_chars[SCREEN_COLS];
     // Refresh random chars when scrolling a new row
-    if (scroll_count++ == 0) {
+    if (g_scroll_count++ == 0) {
       for (uint8_t i = 0; i < SCREEN_COLS; ++i) {
         maze_chars[i]  = random(2) ? '/' : '\\';
       }
     }
     // Scroll line up by one pixel
     memmove(BITMAP_RAM, BITMAP_RAM + SCREEN_COLS, (BITMAP_ROWS - 1) * SCREEN_COLS);
-    draw_string(BITMAP_ROWS - scroll_count, maze_chars);
-    if (scroll_count == ROWS_PER_CHAR) scroll_count = 0;
+    draw_string(BITMAP_ROWS - g_scroll_count, maze_chars);
+    if (g_scroll_count == ROWS_PER_CHAR) g_scroll_count = 0;
   }
   // Delegate to bitmap idle function
   bitmap_idle();
 }
 
 void init_maze(Args) {
-  idle_count = 0;
-  scroll_count = 0;
-  idle_fn = idle_maze;
+  g_idle_count = 0;
+  g_scroll_count = 0;
+  g_idle_fn = maze_idle;
 }
 
 // Commodore 64 font extracted from VICE
