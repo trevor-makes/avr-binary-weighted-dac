@@ -22,6 +22,7 @@ void set_delay(Args);
 void init_circle(Args);
 void init_cross(Args);
 void init_bounce(Args);
+void init_circum(Args);
 
 void clear_screen(Args);
 void init_logo(Args);

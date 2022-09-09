@@ -29,6 +29,7 @@ void loop() {
     { "circle", init_circle },
     { "cross", init_cross },
     { "bounce", init_bounce },
+    { "circum", init_circum },
     // bitmap.cpp
     { "doge", init_doge },
     { "pepe", init_pepe },

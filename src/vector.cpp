@@ -134,3 +134,53 @@ void bounce_idle() {
 void init_bounce(Args) {
   g_idle_fn = bounce_idle;
 }
+
+struct Point { uint8_t x; uint8_t y; };
+
+// Compute random point on circumference
+void random_point(Point& point) {
+  float angle = radians(random(0, 359));
+  point.x = (cos(angle) + 1) * 0.5 * 63;
+  point.y = (sin(angle) + 1) * 0.5 * 63;
+}
+
+struct Triangle { Point a; Point b; Point c; };
+
+// Compute random circumscribed triangle
+void random_triangle(Triangle& triangle) {
+  random_point(triangle.a);
+  random_point(triangle.b);
+  random_point(triangle.c);
+}
+
+constexpr uint8_t MAX_TRIS = 8;
+static uint8_t g_num_tris = 0;
+
+void circum_idle() {
+  static Triangle buffer[MAX_TRIS];
+  // Add new triangle every 1/16 frames
+  static uint8_t delay = 0;
+  if ((delay++ & 0x0F) == 0) {
+    if (g_num_tris < MAX_TRIS) {
+      ++g_num_tris;
+    } else {
+      memmove(buffer, buffer + 1, (MAX_TRIS - 1) * sizeof(Triangle));
+    }
+    random_triangle(buffer[g_num_tris - 1]);
+  }
+  // Trace triangles
+  for (uint8_t i = 0; i < g_num_tris; ++i) {
+    Triangle& tri = buffer[i];
+    // Repeat recently inserted triangles so they appear brighter
+    for (uint8_t j = 0; j <= i; ++j) {
+      draw_line(tri.a.x, tri.a.y, tri.b.x, tri.b.y);
+      draw_line(tri.b.x, tri.b.y, tri.c.x, tri.c.y);
+      draw_line(tri.c.x, tri.c.y, tri.a.x, tri.a.y);
+    }
+  }
+}
+
+void init_circum(Args) {
+  g_num_tris = 0;
+  g_idle_fn = circum_idle;
+}
