@@ -4,25 +4,24 @@
 
 void draw_line(int8_t x0, int8_t y0, int8_t x1, int8_t y1) {
   // https://en.wikipedia.org/wiki/Bresenham's_line_algorithm
+  // https://rosettacode.org/wiki/Bitmap/Bresenham's_line_algorithm#C
   int8_t dx = x0 < x1 ? x1 - x0 : x0 - x1;
   int8_t sx = x0 < x1 ? 1 : -1;
-  int8_t dy = y0 < y1 ? y0 - y1 : y1 - y0; // should be negative
+  int8_t dy = y0 < y1 ? y1 - y0 : y0 - y1;
   int8_t sy = y0 < y1 ? 1 : -1;
-  int8_t error = dx + dy;
+  int8_t error = (dx > dy ? dx : -dy) / 2;
 
   write_x(x0);
   write_y(y0);
   for (;;) {
     if (x0 == x1 && y0 == y1) break;
-    int8_t e2 = 2 * error;
-    if (e2 >= dy) {
-      //if (x0 == x1) break;
-      error += dy;
+    int8_t e2 = error;
+    if (e2 > -dx) {
+      error -= dy;
       x0 += sx;
       write_x(x0);
     }
-    if (e2 <= dx) {
-      //if (y0 == y1) break;
+    if (e2 < dy) {
       error += dx;
       y0 += sy;
       write_y(y0);
