@@ -68,39 +68,31 @@ void draw_bitmap() {
   }
 }
 
-IdleFn g_bitmap_idle_ptr = draw_bitmap<false, false>;
+bool g_flip_v = false;
+bool g_flip_h = false;
 
 void bitmap_idle() {
-  g_bitmap_idle_ptr();
-}
-
-void flip_bitmap(bool flip_h, bool flip_v) {
-  if (flip_h) {
-    if (flip_v) {
-      g_bitmap_idle_ptr = draw_bitmap<true, true>;
+  if (g_flip_h) {
+    if (g_flip_v) {
+      draw_bitmap<true, true>();
     } else {
-      g_bitmap_idle_ptr = draw_bitmap<true, false>;
+      draw_bitmap<true, false>();
     }
   } else {
-    if (flip_v) {
-      g_bitmap_idle_ptr = draw_bitmap<false, true>;
+    if (g_flip_v) {
+      draw_bitmap<false, true>();
     } else {
-      g_bitmap_idle_ptr = draw_bitmap<false, false>;
+      draw_bitmap<false, false>();
     }
   }
 }
 
-bool g_flip_v = false;
-bool g_flip_h = false;
-
 void flip_vertical(Args) {
   g_flip_v = !g_flip_v;
-  flip_bitmap(g_flip_h, g_flip_v);
 }
 
 void flip_horizontal(Args) {
   g_flip_h = !g_flip_h;
-  flip_bitmap(g_flip_h, g_flip_v);
 }
 
 void copy_bitmap(const uint8_t* source) {
