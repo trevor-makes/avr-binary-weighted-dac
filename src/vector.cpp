@@ -92,7 +92,7 @@ void circle_idle() {
   draw_circle(32, 32, 31);
 }
 
-void init_circle(Args) {
+void do_circle(Args) {
   g_idle_fn = circle_idle;
 }
 
@@ -102,7 +102,7 @@ void cross_idle() {
   draw_line(63, 0, 0, 63);
 }
 
-void init_cross(Args) {
+void do_cross(Args) {
   g_idle_fn = cross_idle;
 }
 
@@ -131,8 +131,8 @@ void bounce_idle() {
   y += dy;
 }
 
-void init_bounce(Args) {
-  g_idle_fn = bounce_idle;
+IdleFn init_bounce() {
+  return bounce_idle;
 }
 
 struct Point { uint8_t x; uint8_t y; };
@@ -180,7 +180,7 @@ void circum_idle() {
   }
 }
 
-void init_circum(Args) {
+IdleFn init_circum() {
   g_num_tris = 0;
-  g_idle_fn = circum_idle;
+  return circum_idle;
 }

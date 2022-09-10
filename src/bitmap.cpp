@@ -97,7 +97,6 @@ void flip_horizontal(Args) {
 
 void copy_bitmap(const uint8_t* source) {
   memcpy_P(BITMAP_RAM, source, BITMAP_BYTES);
-  g_idle_fn = bitmap_idle;
 }
 
 struct API : public core::mon::Base<API> {
@@ -117,15 +116,17 @@ void import_bitmap(Args args) {
 extern const uint8_t DOGE_ROM[] PROGMEM;
 
 // Start drawing Doge bitmap in idle loop
-void init_doge(Args) {
+IdleFn init_doge() {
   copy_bitmap(DOGE_ROM);
+  return bitmap_idle;
 }
 
 extern const uint8_t PEPE_ROM[] PROGMEM;
 
 // Start drawing Pepe bitmap in idle loop
-void init_pepe(Args) {
+IdleFn init_pepe() {
   copy_bitmap(PEPE_ROM);
+  return bitmap_idle;
 }
 
 // 64x64 1-bit Doge bitmap

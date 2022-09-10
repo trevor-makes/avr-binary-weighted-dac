@@ -55,13 +55,13 @@ void clear_screen(Args) {
 }
 
 // Copy logo to screen buffer
-void init_logo(Args) {
+IdleFn init_logo() {
   clear_bitmap();
   draw_string(2 * ROWS_PER_CHAR, "````````");
   draw_string(3 * ROWS_PER_CHAR, "Trevor  ");
   draw_string(4 * ROWS_PER_CHAR, "  Makes!");
   draw_string(5 * ROWS_PER_CHAR, "````````");
-  g_idle_fn = bitmap_idle;
+  return bitmap_idle;
 }
 
 // Scroll screen buffer and print message to bottom row
@@ -100,10 +100,10 @@ void maze_idle() {
   bitmap_idle();
 }
 
-void init_maze(Args) {
+IdleFn init_maze() {
   g_idle_count = 0;
   g_scroll_count = 0;
-  g_idle_fn = maze_idle;
+  return maze_idle;
 }
 
 // Commodore 64 font extracted from VICE

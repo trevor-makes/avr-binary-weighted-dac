@@ -19,18 +19,18 @@ extern CLI g_serial_cli;
 void bitmap_idle();
 void set_delay(Args);
 
-void init_circle(Args);
-void init_cross(Args);
-void init_bounce(Args);
-void init_circum(Args);
+void do_circle(Args);
+void do_cross(Args);
+IdleFn init_bounce();
+IdleFn init_circum();
 
 void clear_screen(Args);
-void init_logo(Args);
 void print_message(Args);
-void init_maze(Args);
+IdleFn init_logo();
+IdleFn init_maze();
 
-void init_doge(Args);
-void init_pepe(Args);
+IdleFn init_doge();
+IdleFn init_pepe();
 void flip_vertical(Args);
 void flip_horizontal(Args);
 void export_bitmap(Args);
