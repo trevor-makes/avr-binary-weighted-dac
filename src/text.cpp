@@ -5,25 +5,27 @@
 #include "core/util.hpp"
 
 extern const uint8_t CHAR_ROM[] PROGMEM;
-
-constexpr uint8_t SCREEN_COLS = 8;
-constexpr uint8_t SCREEN_ROWS = 8;
 constexpr uint8_t COLS_PER_CHAR = 8;
 constexpr uint8_t ROWS_PER_CHAR = 8;
-constexpr uint8_t BITMAP_ROWS = SCREEN_ROWS * ROWS_PER_CHAR;
+
+constexpr uint8_t BITMAP_ROWS = DAC::Y::RESOLUTION;
+constexpr uint8_t BITMAP_COL_BITS = DAC::X::RESOLUTION;
+constexpr uint8_t TEXT_COLS = BITMAP_COL_BITS / COLS_PER_CHAR;
+constexpr uint8_t TEXT_ROWS = BITMAP_ROWS / ROWS_PER_CHAR;
+
 constexpr char FIRST_CHAR = '!';
 constexpr char LAST_CHAR = '~';
 
 extern uint8_t BITMAP_RAM[];
 
 void draw_string(uint8_t row, const char* str) {
-  uint8_t* col_ptr = BITMAP_RAM + row * SCREEN_COLS;
-  uint8_t rows = util::min(ROWS_PER_CHAR, uint8_t(BITMAP_ROWS - util::min(BITMAP_ROWS, row)));
+  uint8_t* col_ptr = BITMAP_RAM + row * TEXT_COLS;
+  uint8_t rows = util::min(ROWS_PER_CHAR, BITMAP_ROWS - util::min(BITMAP_ROWS, row));
 
   // Clear line
-  memset(col_ptr, 0, SCREEN_COLS * rows);
+  memset(col_ptr, 0, TEXT_COLS * rows);
 
-  for (uint8_t col = 0; col < SCREEN_COLS; ++col) {
+  for (uint8_t col = 0; col < TEXT_COLS; ++col) {
     // Read ASCII code for current character
     char c = *str++;
 
@@ -38,14 +40,14 @@ void draw_string(uint8_t row, const char* str) {
     // Trace each character fully before advancing to next character
     uint16_t char_index = (c - FIRST_CHAR) * ROWS_PER_CHAR;
     const uint8_t* char_ptr = &CHAR_ROM[char_index];
-    for (uint8_t offset = col; offset < SCREEN_COLS * rows; offset += SCREEN_COLS) {
+    for (uint8_t offset = col; offset < TEXT_COLS * rows; offset += TEXT_COLS) {
       col_ptr[offset] = pgm_read_byte(char_ptr++);
     }
   }
 }
 
 void clear_bitmap() {
-  memset(BITMAP_RAM, 0, SCREEN_COLS * BITMAP_ROWS);
+  memset(BITMAP_RAM, 0, TEXT_COLS * BITMAP_ROWS);
 }
 
 // Clear each row of screen buffer
@@ -57,10 +59,11 @@ void clear_screen(Args) {
 // Copy logo to screen buffer
 IdleFn init_logo() {
   clear_bitmap();
-  draw_string(2 * ROWS_PER_CHAR, "````````");
-  draw_string(3 * ROWS_PER_CHAR, "Trevor  ");
-  draw_string(4 * ROWS_PER_CHAR, "  Makes!");
-  draw_string(5 * ROWS_PER_CHAR, "````````");
+  constexpr uint8_t MIDDLE = TEXT_ROWS / 2;
+  draw_string((MIDDLE - 2) * ROWS_PER_CHAR, "````````");
+  draw_string((MIDDLE - 1) * ROWS_PER_CHAR, "Trevor  ");
+  draw_string((MIDDLE + 0) * ROWS_PER_CHAR, "  Makes!");
+  draw_string((MIDDLE + 1) * ROWS_PER_CHAR, "````````");
   return bitmap_idle;
 }
 
@@ -69,10 +72,10 @@ void print_message(Args args) {
   const char* message = args.next();
 
   // Scroll rows up from the bottom
-  memmove(BITMAP_RAM, BITMAP_RAM + SCREEN_COLS * ROWS_PER_CHAR, (SCREEN_ROWS - 1) * SCREEN_COLS * ROWS_PER_CHAR);
+  memmove(BITMAP_RAM, BITMAP_RAM + TEXT_COLS * ROWS_PER_CHAR, (TEXT_ROWS - 1) * TEXT_COLS * ROWS_PER_CHAR);
 
   // Copy message into now vacant line at bottom
-  draw_string((SCREEN_ROWS - 1) * ROWS_PER_CHAR, message);
+  draw_string((TEXT_ROWS - 1) * ROWS_PER_CHAR, message);
 
   // Set idle function to draw screen buffer
   g_idle_fn = bitmap_idle;
@@ -84,15 +87,15 @@ static uint8_t g_scroll_count = 0;
 void maze_idle() {
   // Limit scrolling to 1/8 framerate
   if ((g_idle_count++ & 0x07) == 0) {
-    static char maze_chars[SCREEN_COLS];
+    static char maze_chars[TEXT_COLS];
     // Refresh random chars when scrolling a new row
     if (g_scroll_count++ == 0) {
-      for (uint8_t i = 0; i < SCREEN_COLS; ++i) {
+      for (uint8_t i = 0; i < TEXT_COLS; ++i) {
         maze_chars[i]  = random(2) ? '/' : '\\';
       }
     }
     // Scroll line up by one pixel
-    memmove(BITMAP_RAM, BITMAP_RAM + SCREEN_COLS, (BITMAP_ROWS - 1) * SCREEN_COLS);
+    memmove(BITMAP_RAM, BITMAP_RAM + TEXT_COLS, (BITMAP_ROWS - 1) * TEXT_COLS);
     draw_string(BITMAP_ROWS - g_scroll_count, maze_chars);
     if (g_scroll_count == ROWS_PER_CHAR) g_scroll_count = 0;
   }

@@ -4,10 +4,10 @@
 
 #include "core/mon.hpp"
 
-constexpr uint8_t BITMAP_ROWS = 64;
-constexpr uint8_t BITMAP_COL_BYTES = 8;
+constexpr uint8_t BITMAP_ROWS = DAC::Y::RESOLUTION;
+constexpr uint8_t BITMAP_COL_BITS = DAC::X::RESOLUTION;
 constexpr uint8_t BITS_PER_BYTE = 8;
-constexpr uint8_t BITMAP_COL_BITS = BITMAP_COL_BYTES * BITS_PER_BYTE;
+constexpr uint8_t BITMAP_COL_BYTES = BITMAP_COL_BITS / BITS_PER_BYTE;
 constexpr size_t BITMAP_BYTES = BITMAP_ROWS * BITMAP_COL_BYTES;
 
 uint8_t BITMAP_RAM[BITMAP_BYTES];
@@ -24,13 +24,13 @@ void write_bits(uint8_t x, const uint8_t y, uint8_t bits) {
   if (bits == 0) return;
 
   // Write Y only if we find a non-blank scanline
-  write_y(y);
+  DAC::Y::write(y);
 
   // Write X for each set bit
   do {
     if (FLIP_H) --x; // Pre-decrement if reversed
     if (bits & 0x80) {
-      write_x(x); // Draw if MSB set
+      DAC::X::write(x); // Draw if MSB set
       delayMicroseconds(g_pixel_hold);
     }
     if (!FLIP_H) ++x; // Post-decrement if forwards

@@ -10,7 +10,7 @@ IdleFn init_attract();
 
 void setup() {
   // Configure I/O ports for output
-  init_ports();
+  DAC::config();
 
   // Begin in attract mode
   g_idle_fn = init_attract();

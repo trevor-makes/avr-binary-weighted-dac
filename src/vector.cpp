@@ -2,6 +2,8 @@
 
 #include "main.hpp"
 
+#include "core/util.hpp"
+
 void draw_line(int8_t x0, int8_t y0, int8_t x1, int8_t y1) {
   // https://en.wikipedia.org/wiki/Bresenham's_line_algorithm
   // https://rosettacode.org/wiki/Bitmap/Bresenham's_line_algorithm#C
@@ -11,20 +13,20 @@ void draw_line(int8_t x0, int8_t y0, int8_t x1, int8_t y1) {
   int8_t sy = y0 < y1 ? 1 : -1;
   int8_t error = (dx > dy ? dx : -dy) / 2;
 
-  write_x(x0);
-  write_y(y0);
+  DAC::X::write(x0);
+  DAC::Y::write(y0);
   for (;;) {
     if (x0 == x1 && y0 == y1) break;
     int8_t e2 = error;
     if (e2 > -dx) {
       error -= dy;
       x0 += sx;
-      write_x(x0);
+      DAC::X::write(x0);
     }
     if (e2 < dy) {
       error += dx;
       y0 += sy;
-      write_y(y0);
+      DAC::Y::write(y0);
     }
   }
 }
@@ -32,26 +34,26 @@ void draw_line(int8_t x0, int8_t y0, int8_t x1, int8_t y1) {
 template <uint8_t Q>
 void write_quad_x(int8_t xm, int8_t ym, int8_t x) {
   if (Q == 0) {
-    write_x(xm - x);
+    DAC::X::write(xm - x);
   } else if (Q == 1) {
-    write_y(ym - x);
+    DAC::Y::write(ym - x);
   } else if (Q == 2) {
-    write_x(xm + x);
+    DAC::X::write(xm + x);
   } else if (Q == 3) {
-    write_y(ym + x);
+    DAC::Y::write(ym + x);
   }
 }
 
 template <uint8_t Q>
 void write_quad_y(int8_t xm, int8_t ym, int8_t y) {
   if (Q == 0) {
-    write_y(ym + y);
+    DAC::Y::write(ym + y);
   } else if (Q == 1) {
-    write_x(xm - y);
+    DAC::X::write(xm - y);
   } else if (Q == 2) {
-    write_y(ym - y);
+    DAC::Y::write(ym - y);
   } else if (Q == 3) {
-    write_x(xm + y);
+    DAC::X::write(xm + y);
   }
 }
 
@@ -89,7 +91,10 @@ void draw_circle(int8_t xm, int8_t ym, int8_t r) {
 
 void circle_idle() {
   // Cosine in X, sine in Y
-  draw_circle(32, 32, 31);
+  constexpr uint8_t CENTER_X = DAC::X::RESOLUTION / 2;
+  constexpr uint8_t CENTER_Y = DAC::Y::RESOLUTION / 2;
+  constexpr uint8_t RADIUS = util::min(CENTER_X, CENTER_Y) - 1;
+  draw_circle(CENTER_X, CENTER_Y, RADIUS);
 }
 
 void do_circle(Args) {
@@ -98,8 +103,10 @@ void do_circle(Args) {
 
 void cross_idle() {
   // Triangle wave in X, sawtooth wave in Y
-  draw_line(0, 0, 63, 63);
-  draw_line(63, 0, 0, 63);
+  constexpr uint8_t MAX_X = DAC::X::RESOLUTION - 1;
+  constexpr uint8_t MAX_Y = DAC::Y::RESOLUTION - 1;
+  draw_line(0, 0, MAX_X, MAX_Y);
+  draw_line(MAX_X, 0, 0, MAX_Y);
 }
 
 void do_cross(Args) {
@@ -111,21 +118,25 @@ void bounce_idle() {
   constexpr uint8_t RADIUS = 4;
   constexpr uint8_t INSET = 4;
   constexpr int8_t DX = 5, DY = 3;
+  constexpr uint8_t MIN_X = 0;
+  constexpr uint8_t MAX_X = DAC::X::RESOLUTION - 1;
+  constexpr uint8_t MIN_Y = INSET;
+  constexpr uint8_t MAX_Y = DAC::Y::RESOLUTION - INSET - 1;
   // 8.8 bit position and .8 bit velocity
-  static uint16_t x = RADIUS * 256;
-  static uint16_t y = (RADIUS + INSET) * 256;
+  static uint16_t x = (MIN_X + RADIUS) * 256;
+  static uint16_t y = (MIN_Y + RADIUS) * 256;
   static int8_t dx = DX, dy = DY;
   // Draw ball and borders
   draw_circle(x >> 8, y >> 8, RADIUS);
-  draw_line(0, INSET, 63, INSET);
-  draw_line(63, INSET, 63, 63 - INSET);
-  draw_line(63, 63 - INSET, 0, 63 - INSET);
-  draw_line(0, 63 - INSET, 0, INSET);
+  draw_line(MIN_X, MIN_Y, MAX_X, MIN_Y);
+  draw_line(MAX_X, MIN_Y, MAX_X, MAX_Y);
+  draw_line(MAX_X, MAX_Y, MIN_X, MAX_Y);
+  draw_line(MIN_X, MAX_Y, MIN_X, MIN_Y);
   // Bounce ball off borders
-  if (x < RADIUS * 256 + DX) dx = DX;
-  if (x > (63 - RADIUS) * 256 - DX) dx = -DX;
-  if (y < (RADIUS + INSET) * 256 + DY) dy = DY;
-  if (y > (63 - INSET - RADIUS) * 256 - DY) dy = -DY;
+  if (x < (MIN_X + RADIUS) * 256 + DX) dx = DX;
+  if (x > (MAX_X - RADIUS) * 256 - DX) dx = -DX;
+  if (y < (MIN_Y + RADIUS) * 256 + DY) dy = DY;
+  if (y > (MAX_Y - RADIUS) * 256 - DY) dy = -DY;
   // Update ball position
   x += dx;
   y += dy;
@@ -140,8 +151,8 @@ struct Point { uint8_t x; uint8_t y; };
 // Compute random point on circumference
 void random_point(Point& point) {
   float angle = radians(random(0, 359));
-  point.x = (cos(angle) + 1) * 0.5 * 63;
-  point.y = (sin(angle) + 1) * 0.5 * 63;
+  point.x = (cos(angle) + 1) * 0.5 * (DAC::X::RESOLUTION - 1);
+  point.y = (sin(angle) + 1) * 0.5 * (DAC::Y::RESOLUTION - 1);
 }
 
 struct Triangle { Point a; Point b; Point c; };
