@@ -45,6 +45,8 @@ void loop() {
     { "flipv", flip_vertical },
     { "export", export_bitmap },
     { "import", import_bitmap },
+    { "save", save_bitmap },
+    { "load", load_bitmap },
     { "delay", set_delay },
   };
 

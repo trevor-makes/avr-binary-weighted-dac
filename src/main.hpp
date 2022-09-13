@@ -35,6 +35,8 @@ void flip_vertical(Args);
 void flip_horizontal(Args);
 void export_bitmap(Args);
 void import_bitmap(Args);
+void save_bitmap(Args);
+void load_bitmap(Args);
 
 #if defined(ARDUINO_AVR_UNO) || defined(ARDUINO_AVR_NANO)
   // For Uno/Nano boards, the two highest bits of ports B and C are unavailable

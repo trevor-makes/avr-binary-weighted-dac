@@ -4,6 +4,8 @@
 
 #include "core/mon.hpp"
 
+#include <EEPROM.h>
+
 constexpr uint8_t BITMAP_ROWS = DAC::Y::RESOLUTION;
 constexpr uint8_t BITMAP_COL_BITS = DAC::X::RESOLUTION;
 constexpr uint8_t BITS_PER_BYTE = 8;
@@ -99,18 +101,42 @@ void copy_bitmap(const uint8_t* source) {
   memcpy_P(BITMAP_RAM, source, BITMAP_BYTES);
 }
 
-struct API : public core::mon::Base<API> {
+struct API : public core::mon::Base<API, 0> {
   static StreamEx& get_stream() { return g_serial_ex; }
   static uint8_t read_byte(uint16_t addr) { return BITMAP_RAM[addr]; }
   static void write_byte(uint16_t addr, uint8_t data) { BITMAP_RAM[addr % BITMAP_BYTES] = data; }
 };
 
 void export_bitmap(Args) {
-  core::mon::impl_save<API>(0, BITMAP_BYTES);
+  core::mon::impl_export<API>(0, BITMAP_BYTES);
 }
 
 void import_bitmap(Args args) {
-  core::mon::cmd_load<API>(args);
+  core::mon::cmd_import<API>(args);
+  g_idle_fn = bitmap_idle;
+}
+
+// save and load need the same validation and it's more convenient as a macro
+#define VALIDATE_ADDRESS(NAME, ARGS) \
+  uint16_t NAME; \
+  { \
+    uint8_t index = atoi(ARGS.next()); \
+    if ((index + 1) * BITMAP_BYTES > EEPROM.length()) { \
+      g_serial_ex.println("invalid index"); \
+      return; \
+    } \
+    NAME = index * BITMAP_BYTES; \
+  }
+
+void save_bitmap(Args args) {
+  VALIDATE_ADDRESS(address, args);
+  EEPROM.put(address, BITMAP_RAM);
+}
+
+void load_bitmap(Args args) {
+  VALIDATE_ADDRESS(address, args);
+  EEPROM.get(address, BITMAP_RAM);
+  g_idle_fn = bitmap_idle;
 }
 
 extern const uint8_t DOGE_ROM[] PROGMEM;
