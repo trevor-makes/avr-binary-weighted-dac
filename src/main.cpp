@@ -54,33 +54,45 @@ void loop() {
   g_serial_cli.run_once(commands, g_idle_fn);
 }
 
-static uint8_t g_mode = 0;
-static uint16_t g_delay = 0;
+static uint8_t g_mode;
+static uint16_t g_countdown;
+static decltype(millis()) g_lastMillis;
 
 void attract_idle() {
-  struct InitFn { IdleFn(*fn)(); uint16_t frames; };
-  static const InitFn init_fns[] = {
-    { init_logo, 4000 },
-    { init_maze, 4000 },
-    { init_doge, 2000 },
-    { init_bounce, 50000 },
-    { init_pepe, 2000 },
-    { init_circum, 5000 },
+  using InitFn = IdleFn(*)();
+  struct Entry { InitFn init_fn; uint16_t delay_ms; };
+  static const Entry entries[] = {
+    { init_logo, 10000 },
+    { init_maze, 20000 },
+    { init_doge, 10000 },
+    { init_bounce, 20000 },
+    { init_pepe, 10000 },
+    { init_circum, 20000 },
   };
-  static const uint8_t N_INIT_FNS = sizeof(init_fns) / sizeof(InitFn);
+  static const uint8_t N_ENTRIES = sizeof(entries) / sizeof(Entry);
+  static IdleFn delegate = nullptr;
 
-  static IdleFn delegate;
-  if (g_delay-- == 0) {
-    const InitFn& next = init_fns[g_mode];
-    g_mode = (g_mode + 1) % N_INIT_FNS;
-    delegate = next.fn();
-    g_delay = next.frames;
+  // Get elapsed time since last frame
+  auto nowMillis = millis();
+  auto elapsed = nowMillis - g_lastMillis;
+  g_lastMillis = nowMillis;
+
+  // Load next mode when countdown reaches zero
+  if (elapsed >= g_countdown) {
+    const Entry& next = entries[g_mode];
+    g_mode = (g_mode + 1) % N_ENTRIES;
+    g_countdown = next.delay_ms;
+    delegate = next.init_fn();
+  } else {
+    g_countdown -= elapsed;
   }
-  delegate();
+
+  if (delegate) delegate();
 }
 
 IdleFn init_attract() {
   g_mode = 0;
-  g_delay = 0;
+  g_countdown = 0;
+  g_lastMillis = millis();
   return attract_idle;
 }
