@@ -11,19 +11,21 @@ TODO binary-weighted diagram
 
 Unfortunately, powers-of-two do not map well to the standard [E series](https://en.wikipedia.org/wiki/E_series_of_preferred_numbers) (roughly based on powers-of-ten), which makes it difficult to select more than a few suitable resistors. For this reason, it's more common to build larger DACs with R-2R [resistor ladders](https://en.wikipedia.org/wiki/Resistor_ladder) which use twice as many resistors, but only of two values rather than a long sequence.
 
-However, for a simple 6-bit binary-weighted DAC, the resistors can be sourced from the common E24 series:
+However, for a simple 6-bit binary-weighted DAC, the resistors can be sourced from the common E24 series. The closest match for 6.0 kΩ is 6.2 kΩ, but two 3.0 kΩ in series or two 12 kΩ in parallel can be substituted if better accuracy is needed.
 
 ```
 E24   Value
 7.5 - 750 Ω
 1.5 - 1.5 kΩ
 3.0 - 3.0 kΩ
-6.2 - 6.2 kΩ (should be 6.0 kΩ; could use 3.0 kΩ in series or 12 kΩ in parallel for better accuracy)
+6.2 - 6.2 kΩ (should be 6.0 kΩ)
 1.2 - 12 kΩ
 2.4 - 24 kΩ
 ```
 
-For the digital outputs from the Arduino itself, it's important to use the low-level GPIO ports directly. Every pin of a given port can be written simultaneously in a single CPU cycle by an `OUT` instruction. Comparatively, `digitalWrite()` calls take around 50 CPU cycles just to set a single pin. Not only would the latter be much slower, but because the updates to each pin would be staggered, the resulting analog signal would glitch whenever bits overflow.
+## Arduino low-level port I/O
+
+For digital output from the Arduino, it's important to use the GPIO ports directly instead of `digitalWrite()`. Every pin of a given port can be written simultaneously in a single CPU cycle by an `OUT` instruction. Comparatively, `digitalWrite()` calls take around 50 CPU cycles just to set a single pin. Not only would the latter be much slower (300x slower for 6 bits), but because the updates to each pin would be staggered, the resulting analog signal would appear to glitch whenever bits overflow.
 
 The ATmega328p used in the Arduino Nano has 3 such GPIO ports named B, C, and D. Conveniently, the low 6-bits of ports B and C each map to 6 digital pins (Arduino pins 8-13 and 14-19) that can be wired to the DACs. This way, raw values 0 through 63 can be written directly to the port, corresponding to analog values 0 through 5 volts.
 
@@ -128,7 +130,7 @@ Capture current bitmap display in [IHX](https://en.wikipedia.org/wiki/Intel_HEX)
 ```
 >import
 ```
-Read [IHX](https://en.wikipedia.org/wiki/Intel_HEX) formatted string from terminal and unpack into bitmap display. Copy-paste IHX from `>export` command or `bitmaps/convert.py` script.
+Read [IHX](https://en.wikipedia.org/wiki/Intel_HEX) formatted string from terminal and unpack into bitmap display. Copy-paste IHX from `>export` command or [convert.py](bitmaps/convert.py) script.
 
 ```
 >save [index]
