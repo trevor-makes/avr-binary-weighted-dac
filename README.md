@@ -3,9 +3,41 @@
 - 2 channels of fast 6-bit analog output with and Arduino Nano and 12 resistors
 - Display 64x64 pixel bitmaps and vector animations on an oscilloscope
 
-TODO
+TODO photo of doge on oscope
 
-Distributed under the [MIT license](LICENSE.txt)
+A binary-weighted [DAC](https://en.wikipedia.org/wiki/Digital-to-analog_converter) is a simple method for transforming multiple digital outputs into a single analog output using only resistors. The resistors are chosen from a power-of-two sequence, with the largest resistor tied to the least-significant bit and the smallest resistor tied to the most-significant bit.
+
+TODO binary-weighted diagram
+
+Unfortunately, powers-of-two do not map well to the standard [E series](https://en.wikipedia.org/wiki/E_series_of_preferred_numbers) (roughly based on powers-of-ten), which makes it difficult to select more than a few suitable resistors. For this reason, it's more common to build larger DACs with R-2R [resistor ladders](https://en.wikipedia.org/wiki/Resistor_ladder) which use twice as many resistors, but only of two values rather than a long sequence.
+
+However, for a simple 6-bit binary-weighted DAC, the resistors can be sourced from the common E24 series:
+
+```
+E24   Value
+7.5 - 750 Ω
+1.5 - 1.5 kΩ
+3.0 - 3.0 kΩ
+6.2 - 6.2 kΩ (should be 6.0 kΩ; could use 3.0 kΩ in series or 12 kΩ in parallel for better accuracy)
+1.2 - 12 kΩ
+2.4 - 24 kΩ
+```
+
+For the digital outputs from the Arduino itself, it's important to use the low-level GPIO ports directly. Every pin of a given port can be written simultaneously in a single CPU cycle by an `OUT` instruction. Comparatively, `digitalWrite()` calls take around 50 CPU cycles just to set a single pin. Not only would the latter be much slower, but because the updates to each pin would be staggered, the resulting analog signal would glitch whenever bits overflow.
+
+The ATmega328p used in the Arduino Nano has 3 such GPIO ports named B, C, and D. Conveniently, the low 6-bits of ports B and C each map to 6 digital pins (Arduino pins 8-13 and 14-19) that can be wired to the DACs. This way, raw values 0 through 63 can be written directly to the port, corresponding to analog values 0 through 5 volts.
+
+TODO Nano diagram and breadboard picture
+
+## Displaying graphics on an oscilloscope
+
+[Analog video](https://en.wikipedia.org/wiki/Analog_television) displays like CRT TVs scan a dot across the screen in a fixed ([raster](https://en.wikipedia.org/wiki/Raster_scan)) pattern. To create a picture, an analog signal varies the intensity of the dot at precise times during the raster.
+
+With a [vector display](https://en.wikipedia.org/wiki/Vector_monitor) like an oscilloscope in X-Y mode, precise timing isn't required as the position of the dot is under full control and can simply be moved to wherever the display should be lit. A bitmap image can be drawn following the same raster order as analog video, but jumping from lit pixel to lit pixel and skipping unlit pixels in between. This way, the intensity of the dot doesn't need to vary at all; the brightness of individual pixels can be adjusted by varying how long the dot is held before moving to the next pixel. 
+
+Vector graphics like lines and curves are even simpler (and faster) as the X-Y position of the dot can directly trace the desired shape. When the X-Y position is controlled digitally, a fast line drawing algorithm like [Bresenham's](https://en.wikipedia.org/wiki/Bresenham's_line_algorithm) is useful.
+
+TODO oscope wiring diagram, picture, or instructions?
 
 ## Building the demo
 
@@ -13,9 +45,7 @@ Use the [PlatformIO](https://platformio.org/) plugin for [VSCode](https://code.v
 
 Open the project folder with VSCode, select the environment for your board (`uno`, `nano`, `oldnano`), and click `Upload`.
 
-## Assembling the circuit
-
-TODO
+Distributed under the [MIT license](LICENSE.txt)
 
 ## Using the demo
 
