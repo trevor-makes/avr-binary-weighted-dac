@@ -1,6 +1,6 @@
 # Arduino Binary-Weighted DAC
 
-- 2 channels of fast 6-bit analog output with and Arduino Nano and 12 resistors
+- 2 channels of fast 6-bit analog output with an Arduino Nano and 12 resistors
 - Display 64x64 pixel bitmaps and vector animations on an oscilloscope
 
 TODO photo of doge on oscope
@@ -9,9 +9,9 @@ A binary-weighted [DAC](https://en.wikipedia.org/wiki/Digital-to-analog_converte
 
 TODO binary-weighted diagram
 
-Unfortunately, powers-of-two do not map well to the standard [E series](https://en.wikipedia.org/wiki/E_series_of_preferred_numbers) (roughly based on powers-of-ten), which makes it difficult to select more than a few suitable resistors. For this reason, it's more common to build larger DACs with R-2R [resistor ladders](https://en.wikipedia.org/wiki/Resistor_ladder) which use twice as many resistors, but only of two values rather than a long sequence.
+Unfortunately, powers-of-two do not map well to the standard [E series](https://en.wikipedia.org/wiki/E_series_of_preferred_numbers) (roughly based on powers-of-ten), which makes it difficult to select more than a few suitable resistors. For this reason, it's more common to build larger DACs with R-2R [resistor ladders](https://en.wikipedia.org/wiki/Resistor_ladder) which use twice as many resistors, but only consisting of two values (R and 2R).
 
-However, for a simple 6-bit binary-weighted DAC, the resistors can be sourced from the common E24 series. The closest match for 6.0 kΩ is 6.2 kΩ, but two 3.0 kΩ in series or two 12 kΩ in parallel can be substituted if better accuracy is needed.
+However, for a simple 6-bit binary-weighted DAC, the resistors can mostly be sourced from the E24 series, often found in cheap resistor kits. There isn't an exact match for 6.0 kΩ; the closest are 6.2 kΩ in E24 or 6.04 kΩ in E96, but two 3.0 kΩ in series or two 12 kΩ in parallel can be substituted if better accuracy is needed.
 
 ```
 E24   Value
@@ -33,9 +33,11 @@ TODO Nano diagram and breadboard picture
 
 ## Displaying graphics on an oscilloscope
 
-[Analog video](https://en.wikipedia.org/wiki/Analog_television) displays like CRT TVs scan a dot across the screen in a fixed ([raster](https://en.wikipedia.org/wiki/Raster_scan)) pattern. To create a picture, an analog signal varies the intensity of the dot at precise times during the raster.
+[Analog video](https://en.wikipedia.org/wiki/Analog_television) displays like CRT TVs scan a dot across the screen in a fixed [raster](https://en.wikipedia.org/wiki/Raster_scan) pattern. To create a picture, an analog signal varies the intensity of the dot at precise times during the raster.
 
-With a [vector display](https://en.wikipedia.org/wiki/Vector_monitor) like an oscilloscope in X-Y mode, precise timing isn't required as the position of the dot is under full control and can simply be moved to wherever the display should be lit. A bitmap image can be drawn following the same raster order as analog video, but jumping from lit pixel to lit pixel and skipping unlit pixels in between. This way, the intensity of the dot doesn't need to vary at all; the brightness of individual pixels can be adjusted by varying how long the dot is held before moving to the next pixel. 
+With a [vector display](https://en.wikipedia.org/wiki/Vector_monitor) like an oscilloscope in X-Y mode, precise timing isn't required as the position of the dot is under full control and can simply be moved to wherever the display should be lit.
+
+A bitmap image can be drawn following the same raster order as analog video, but jumping from pixel to pixel and skipping those that shouldn't be lit. This way, the intensity of the dot doesn't need to vary at all; the brightness of individual pixels can be adjusted by varying how long the dot is held in place before moving to the next pixel. 
 
 Vector graphics like lines and curves are even simpler (and faster) as the X-Y position of the dot can directly trace the desired shape. When the X-Y position is controlled digitally, a fast line drawing algorithm like [Bresenham's](https://en.wikipedia.org/wiki/Bresenham's_line_algorithm) is useful.
 
