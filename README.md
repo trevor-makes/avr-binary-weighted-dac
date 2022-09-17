@@ -3,7 +3,7 @@
 - 2 channels of fast 6-bit analog output with an Arduino Nano and 12 resistors
 - Display 64x64 pixel bitmaps and vector animations on an oscilloscope
 
-TODO photo of doge on oscope
+![](images/doge_scope.jpg)
 
 A binary-weighted [DAC](https://en.wikipedia.org/wiki/Digital-to-analog_converter) is a simple method for transforming multiple digital outputs into a single analog output using only resistors. The resistors are chosen from a power-of-two sequence, with the largest resistor tied to the least-significant bit and the smallest resistor tied to the most-significant bit.
 
@@ -29,7 +29,9 @@ For digital output from the Arduino, it's important to use the GPIO ports direct
 
 The ATmega328p used in the Arduino Nano has 3 such GPIO ports named B, C, and D. Conveniently, the low 6-bits of ports B and C each map to 6 digital pins (Arduino pins 8-13 and 14-19) that can be wired to the DACs. This way, raw values 0 through 63 can be written directly to the port, corresponding to analog values 0 through 5 volts.
 
-TODO Nano diagram and breadboard picture
+TODO circuit diagram
+
+![](images/breadboard.jpg)
 
 ## Displaying graphics on an oscilloscope
 
