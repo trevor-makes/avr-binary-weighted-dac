@@ -51,6 +51,8 @@ Use the [PlatformIO](https://platformio.org/) plugin for [VSCode](https://code.v
 
 Open the project folder with VSCode, select the environment for your board (`uno`, `nano`, `oldnano`), and click `Upload`.
 
+The [core](https://github.com/trevor-makes/core) library is required and PlatformIO will download this into the `.pio` folder.
+
 Distributed under the [MIT license](LICENSE.txt)
 
 ## Using the demo
@@ -150,13 +152,3 @@ Load bitmap display from EEPROM. Arduino Uno/Nano can hold 2 64x64 bitmaps in EE
 >delay [microseconds]
 ```
 Number of microseconds to linger on each set pixel in bitmap mode. Larger numbers make the display sharper, but at reduced frame rate.
-
-## Dependencies
-
-The following dependencies will be downloaded by PlatformIO at build time:
-
-- [core](https://github.com/trevor-makes/core)
-
-## Contributors
-
-[Trevor Makes](mailto:the.trevor.makes@gmail.com)
