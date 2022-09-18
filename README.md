@@ -7,7 +7,7 @@
 
 A binary-weighted [DAC](https://en.wikipedia.org/wiki/Digital-to-analog_converter) is a simple method for transforming multiple digital outputs into a single analog output using only resistors. The resistors are chosen from a power-of-two sequence, with the largest resistor tied to the least-significant bit and the smallest resistor tied to the most-significant bit.
 
-TODO binary-weighted diagram
+![](images/example.png)
 
 Unfortunately, powers-of-two do not map well to the standard [E series](https://en.wikipedia.org/wiki/E_series_of_preferred_numbers) (roughly based on powers-of-ten), which makes it difficult to select more than a few suitable resistors. For this reason, it's more common to build larger DACs with R-2R [resistor ladders](https://en.wikipedia.org/wiki/Resistor_ladder) which use twice as many resistors, but only consisting of two values (R and 2R).
 
@@ -29,7 +29,7 @@ For digital output from the Arduino, it's important to use the GPIO ports direct
 
 The ATmega328p used in the Arduino Nano has 3 such GPIO ports named B, C, and D. Conveniently, the low 6-bits of ports B and C each map to 6 digital pins (Arduino pins 8-13 and 14-19) that can be wired to the DACs. This way, raw values 0 through 63 can be written directly to the port, corresponding to analog values 0 through 5 volts.
 
-TODO circuit diagram
+![](images/schematic.png)
 
 ![](images/breadboard.jpg)
 
