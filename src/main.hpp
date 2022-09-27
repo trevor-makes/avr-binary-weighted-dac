@@ -23,6 +23,10 @@ void do_circle(Args);
 void do_cross(Args);
 IdleFn init_bounce();
 IdleFn init_circum();
+void custom_lissajous(Args);
+IdleFn init_lj_11();
+IdleFn init_lj_12();
+IdleFn init_lj_56();
 
 void clear_screen(Args);
 void print_message(Args);

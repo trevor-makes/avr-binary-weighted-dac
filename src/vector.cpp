@@ -195,3 +195,80 @@ IdleFn init_circum() {
   g_num_tris = 0;
   return circum_idle;
 }
+
+// Compute sine LUT at compile time, stored in Flash memory
+static constexpr uint8_t RESOLUTION = util::min(DAC::X::RESOLUTION, DAC::Y::RESOLUTION);
+#define SINE_STEP(i) uint8_t((sin(i * M_PI / 8) + 1.f) * 0.5f * (RESOLUTION - 1))
+static uint8_t const SINE_LUT[16] PROGMEM = {
+  SINE_STEP(0),  SINE_STEP(1),  SINE_STEP(2),  SINE_STEP(3),
+  SINE_STEP(4),  SINE_STEP(5),  SINE_STEP(6),  SINE_STEP(7),
+  SINE_STEP(8),  SINE_STEP(9),  SINE_STEP(10), SINE_STEP(11),
+  SINE_STEP(12), SINE_STEP(13), SINE_STEP(14), SINE_STEP(15),
+};
+#undef SINE_STEP
+
+// Approximate sine with LUT and lerp
+// Could be optimized, but way faster than float
+uint8_t uint_sine(uint8_t x) {
+  uint8_t i_a = (x >> 4) & 15;
+  uint8_t i_b = (i_a + 1) & 15;
+  uint8_t a = pgm_read_byte(&SINE_LUT[i_a]);
+  uint8_t b = pgm_read_byte(&SINE_LUT[i_b]);
+  uint8_t t = x & 15;
+  return (a * (16 - t) + b * t) >> 4;
+}
+
+uint8_t g_lj_ax, g_lj_ay;
+uint8_t g_lj_dx, g_lj_dy;
+uint8_t g_lj_delay;
+
+void lissajous_idle() {
+  static uint8_t x0 = 0, y0 = 0;
+  uint8_t x = uint_sine(g_lj_ax);
+  uint8_t y = uint_sine(g_lj_ay);
+  draw_line(x0, y0, x, y);
+  g_lj_ax += g_lj_dx;
+  g_lj_ay += g_lj_dy;
+  x0 = x;
+  y0 = y;
+
+  // Optionally animate the phase difference over time
+  if (g_lj_delay) {
+    static unsigned long last_millis = millis();
+    unsigned long now_millis = millis();
+    if (now_millis - last_millis > g_lj_delay) {
+      last_millis = now_millis;
+      g_lj_ax += 1;
+    }
+  }
+}
+
+void custom_lissajous(Args args) {
+  g_lj_dx = args.has_next() ? atoi(args.next()) : 1;
+  g_lj_dy = args.has_next() ? atoi(args.next()) : 1;
+  g_lj_ax = args.has_next() ? atoi(args.next()) : 64; // Phase, 64 = pi/2
+  g_lj_ay = 0;
+  g_lj_delay = args.has_next() ? atoi(args.next()) : 0;
+  g_idle_fn = lissajous_idle;
+}
+
+IdleFn init_lj_11() {
+  g_lj_dx = 1;
+  g_lj_dy = 1;
+  g_lj_delay = 10;
+  return lissajous_idle;
+}
+
+IdleFn init_lj_12() {
+  g_lj_dx = 1;
+  g_lj_dy = 2;
+  g_lj_delay = 25;
+  return lissajous_idle;
+}
+
+IdleFn init_lj_56() {
+  g_lj_dx = 5;
+  g_lj_dy = 6;
+  g_lj_delay = 35;
+  return lissajous_idle;
+}

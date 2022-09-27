@@ -38,6 +38,7 @@ void loop() {
     { "cross", do_cross },
     { "bounce", DoIdle<init_bounce> },
     { "circum", DoIdle<init_circum> },
+    { "lissajous", custom_lissajous },
     // bitmap.cpp
     { "doge", DoIdle<init_doge> },
     { "pepe", DoIdle<init_pepe> },
@@ -63,11 +64,14 @@ void attract_idle() {
   struct Entry { InitFn init_fn; uint16_t delay_ms; };
   static const Entry entries[] = {
     { init_logo, 10000 },
-    { init_maze, 20000 },
+    { init_maze, 15000 },
+    { init_lj_11, 15000 },
     { init_doge, 10000 },
-    { init_bounce, 20000 },
+    { init_bounce, 15000 },
+    { init_lj_12, 15000 },
     { init_pepe, 10000 },
-    { init_circum, 20000 },
+    { init_circum, 15000 },
+    { init_lj_56, 15000 },
   };
   static const uint8_t N_ENTRIES = sizeof(entries) / sizeof(Entry);
   static IdleFn delegate = nullptr;

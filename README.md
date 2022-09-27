@@ -107,6 +107,11 @@ Display bouncing ball vector animation.
 Display random circumscribed triangles animation.
 
 ```
+>lissajous [a=1] [b=1] [∂=64] [animate=0]
+```
+Display the Lissajous curve described by the given parameters: `x(t) = sin(at+∂), y(t) = sin(bt)`. The phase offset `∂` maps from [0, 256) to [0, 2π), thus the default 64 is equivalent to π/2. If the `animate` parameter is specified, the phase will increase by 1 (π/128) every `animate` milliseconds.
+
+```
 >doge
 ```
 Display doge bitmap.
@@ -141,12 +146,12 @@ Capture current bitmap display in [IHX](https://en.wikipedia.org/wiki/Intel_HEX)
 Read [IHX](https://en.wikipedia.org/wiki/Intel_HEX) formatted string from terminal and unpack into bitmap display. Copy-paste IHX from `>export` command or [convert.py](bitmaps/convert.py) script.
 
 ```
->save [index]
+>save [index=0]
 ```
 Store current bitmap in EEPROM. Arduino Uno/Nano can hold 2 64x64 bitmaps in EEPROM, at indices 0 and 1 (defaults to 0 if not given).
 
 ```
->load
+>load [index=0]
 ```
 Load bitmap display from EEPROM. Arduino Uno/Nano can hold 2 64x64 bitmaps in EEPROM, at indices 0 and 1 (defaults to 0 if not given).
 
