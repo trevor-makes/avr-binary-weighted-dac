@@ -42,6 +42,8 @@ void loop() {
     // bitmap.cpp
     { "doge", DoIdle<init_doge> },
     { "pepe", DoIdle<init_pepe> },
+    { "reee", DoIdle<init_reee> },
+    { "wojak", DoIdle<init_wojak> },
     { "fliph", flip_horizontal },
     { "flipv", flip_vertical },
     { "export", export_bitmap },

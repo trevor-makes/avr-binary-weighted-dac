@@ -35,6 +35,8 @@ IdleFn init_maze();
 
 IdleFn init_doge();
 IdleFn init_pepe();
+IdleFn init_reee();
+IdleFn init_wojak();
 void flip_vertical(Args);
 void flip_horizontal(Args);
 void export_bitmap(Args);
