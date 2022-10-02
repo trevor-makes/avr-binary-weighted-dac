@@ -15,8 +15,7 @@ void draw_line(int8_t x0, int8_t y0, int8_t x1, int8_t y1) {
 
   DAC::X::write(x0);
   DAC::Y::write(y0);
-  for (;;) {
-    if (x0 == x1 && y0 == y1) break;
+  while (x0 != x1 || y0 != y1) {
     int8_t e2 = error;
     if (e2 > -dx) {
       error -= dy;
@@ -66,8 +65,7 @@ void draw_quadrant(int8_t xm, int8_t ym, int8_t r) {
 
   write_quad_x<Q>(xm, ym, x);
   write_quad_y<Q>(xm, ym, y);
-  for (;;) {
-    if (x == 0) break;
+  while (x != 0) {
     r = err;
     if (r <= y) {
       ++y;
