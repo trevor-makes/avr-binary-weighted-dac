@@ -20,7 +20,7 @@ extern uint8_t BITMAP_RAM[];
 
 void draw_string(uint8_t row, const char* str) {
   uint8_t* col_ptr = BITMAP_RAM + row * TEXT_COLS;
-  uint8_t rows = util::min(ROWS_PER_CHAR, BITMAP_ROWS - util::min(BITMAP_ROWS, row));
+  uint8_t rows = core::util::min(ROWS_PER_CHAR, BITMAP_ROWS - core::util::min(BITMAP_ROWS, row));
 
   // Clear line
   memset(col_ptr, 0, TEXT_COLS * rows);

@@ -91,7 +91,7 @@ void circle_idle() {
   // Cosine in X, sine in Y
   constexpr uint8_t CENTER_X = DAC::X::RESOLUTION / 2;
   constexpr uint8_t CENTER_Y = DAC::Y::RESOLUTION / 2;
-  constexpr uint8_t RADIUS = util::min(CENTER_X, CENTER_Y) - 1;
+  constexpr uint8_t RADIUS = core::util::min(CENTER_X, CENTER_Y) - 1;
   draw_circle(CENTER_X, CENTER_Y, RADIUS);
 }
 
@@ -195,7 +195,7 @@ IdleFn init_circum() {
 }
 
 // Compute sine LUT at compile time, stored in Flash memory
-static constexpr uint8_t RESOLUTION = util::min(DAC::X::RESOLUTION, DAC::Y::RESOLUTION);
+static constexpr uint8_t RESOLUTION = core::util::min(DAC::X::RESOLUTION, DAC::Y::RESOLUTION);
 #define SINE_STEP(i) uint8_t((sin(i * M_PI / 8) + 1.f) * 0.5f * (RESOLUTION - 1))
 static uint8_t const SINE_LUT[16] PROGMEM = {
   SINE_STEP(0),  SINE_STEP(1),  SINE_STEP(2),  SINE_STEP(3),
