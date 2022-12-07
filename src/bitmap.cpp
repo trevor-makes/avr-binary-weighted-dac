@@ -101,10 +101,15 @@ void copy_bitmap(const uint8_t* source) {
   memcpy_P(BITMAP_RAM, source, BITMAP_BYTES);
 }
 
-struct API : public core::mon::Base<API, 0> {
+struct API : public core::mon::Base<API> {
   static StreamEx& get_stream() { return g_serial_ex; }
-  static uint8_t read_byte(uint16_t addr) { return BITMAP_RAM[addr]; }
-  static void write_byte(uint16_t addr, uint8_t data) { BITMAP_RAM[addr % BITMAP_BYTES] = data; }
+  struct BUS {
+    static void config_read() {}
+    static void config_write() {}
+    static void flush_write() {}
+    static uint8_t read_byte(uint16_t addr) { return BITMAP_RAM[addr]; }
+    static void write_byte(uint16_t addr, uint8_t data) { BITMAP_RAM[addr % BITMAP_BYTES] = data; }
+  };
 };
 
 void export_bitmap(Args) {
