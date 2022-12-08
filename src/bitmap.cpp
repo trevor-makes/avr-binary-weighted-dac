@@ -104,7 +104,7 @@ void copy_bitmap(const uint8_t* source) {
 
 struct API : public core::mon::Base<API> {
   static StreamEx& get_stream() { return g_serial_ex; }
-  using BUS = CORE_ARRAY_BUS(BITMAP_RAM);
+  using BUS = CORE_ARRAY_BUS(BITMAP_RAM, uint16_t);
 };
 
 void export_bitmap(Args) {
