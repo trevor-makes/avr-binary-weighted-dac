@@ -27,34 +27,34 @@ void DoIdle(Args) {
 
 void loop() {
   static const Command commands[] = {
-    { "attract", DoIdle<init_attract> },
+    { F("attract"), DoIdle<init_attract> },
     // text.cpp
-    { "logo", DoIdle<init_logo> },
-    { "clear", clear_screen },
-    { "print", print_message },
-    { "maze", DoIdle<init_maze> },
+    { F("logo"), DoIdle<init_logo> },
+    { F("clear"), clear_screen },
+    { F("print"), print_message },
+    { F("maze"), DoIdle<init_maze> },
     // vector.cpp
-    { "circle", do_circle },
-    { "cross", do_cross },
-    { "bounce", DoIdle<init_bounce> },
-    { "circum", DoIdle<init_circum> },
-    { "lissajous", custom_lissajous },
+    { F("circle"), do_circle },
+    { F("cross"), do_cross },
+    { F("bounce"), DoIdle<init_bounce> },
+    { F("circum"), DoIdle<init_circum> },
+    { F("lissajous"), custom_lissajous },
     // bitmap.cpp
-    { "doge", DoIdle<init_doge> },
-    { "pepe", DoIdle<init_pepe> },
-    { "reee", DoIdle<init_reee> },
-    { "wojak", DoIdle<init_wojak> },
-    { "fliph", flip_horizontal },
-    { "flipv", flip_vertical },
-    { "export", export_bitmap },
-    { "import", import_bitmap },
-    { "save", save_bitmap },
-    { "load", load_bitmap },
-    { "delay", set_delay },
+    { F("doge"), DoIdle<init_doge> },
+    { F("pepe"), DoIdle<init_pepe> },
+    { F("reee"), DoIdle<init_reee> },
+    { F("wojak"), DoIdle<init_wojak> },
+    { F("fliph"), flip_horizontal },
+    { F("flipv"), flip_vertical },
+    { F("export"), export_bitmap },
+    { F("import"), import_bitmap },
+    { F("save"), save_bitmap },
+    { F("load"), load_bitmap },
+    { F("delay"), set_delay },
   };
 
   // Prompt for a command from the list while looping over the idle function
-  g_serial_cli.run_once(commands, g_idle_fn);
+  g_serial_cli.prompt(commands, g_idle_fn);
 }
 
 static uint8_t g_mode;
